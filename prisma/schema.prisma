@@ -1,0 +1,49 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum PaymentMethod {
+  pix
+  credit
+  debit
+  boleto
+  cash
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique()
+  password  String
+  createdAt DateTime @default(now())
+}
+
+model Patient {
+  id        Int       @id @default(autoincrement())
+  name      String
+  cpf       String    @unique()
+  payments  Payment[]
+  createdAt DateTime  @default(now())
+}
+
+model Payment {
+  id         Int           @id @default(autoincrement())
+  patient    Patient       @relation(fields: [patientId], references: [id])
+  patientId  Int
+  amount     Float
+  method     PaymentMethod
+  date       DateTime
+  createdAt  DateTime      @default(now())
+}
+
+model Expense {
+  id         Int      @id @default(autoincrement())
+  description String
+  amount     Float
+  date       DateTime
+  createdAt  DateTime @default(now())
+}
