@@ -59,7 +59,7 @@ export function PaymentsView({ payments, onAddPayment, onEditPayment, onDeletePa
     <div className="space-y-6">
       <Card className="bg-white shadow-sm">
         <CardHeader className="flex flex-col sm:flex-row gap-4 sm:items-center justify-between">
-          <CardTitle className="text-zinc-800">Pacientes e Pagamentos</CardTitle>
+          <CardTitle className="text-zinc-800">Pacientes</CardTitle>
           <Button 
             onClick={() => setIsModalOpen(true)}
             className="bg-primary hover:bg-primary/90"

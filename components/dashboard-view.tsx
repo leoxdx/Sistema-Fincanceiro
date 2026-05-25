@@ -1,24 +1,80 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { TrendingUp, TrendingDown, DollarSign, PlusCircle, MinusCircle } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils-format'
-import { monthlyData } from '@/lib/mock-data'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts'
+import { Payment, Expense } from '@/lib/types'
+
+const monthNames = [
+  'Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'
+]
 
 interface DashboardViewProps {
-  totalRevenue: number
-  totalExpenses: number
+  payments: Payment[]
+  expenses: Expense[]
   onQuickAction: (action: 'payment' | 'expense') => void
 }
 
-export function DashboardView({ totalRevenue, totalExpenses, onQuickAction }: DashboardViewProps) {
+export function DashboardView({ payments, expenses, onQuickAction }: DashboardViewProps) {
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
+  const hasDateFilter = startDate !== '' && endDate !== ''
+  const start = hasDateFilter ? new Date(startDate) : null
+  const end = hasDateFilter ? new Date(endDate) : null
+
+  const filteredPayments = useMemo(
+    () => payments.filter((payment) => {
+      if (!hasDateFilter) return true
+      const paymentDate = new Date(payment.date)
+      return paymentDate >= start! && paymentDate <= end!
+    }),
+    [payments, hasDateFilter, startDate, endDate]
+  )
+
+  const filteredExpenses = useMemo(
+    () => expenses.filter((expense) => {
+      if (!hasDateFilter) return true
+      const expenseDate = new Date(expense.date)
+      return expenseDate >= start! && expenseDate <= end!
+    }),
+    [expenses, hasDateFilter, startDate, endDate]
+  )
+
+  const totalRevenue = useMemo(
+    () => filteredPayments.reduce((sum, payment) => sum + payment.amount, 0),
+    [filteredPayments]
+  )
+
+  const totalExpenses = useMemo(
+    () => filteredExpenses.reduce((sum, expense) => sum + expense.amount, 0),
+    [filteredExpenses]
+  )
+
+  const monthlyData = useMemo(() => {
+    const monthlyMap = new Map<string, { month: string; receita: number; despesas: number }>()
+
+    filteredPayments.forEach((payment) => {
+      const month = monthNames[new Date(payment.date).getMonth()]
+      const current = monthlyMap.get(month) || { month, receita: 0, despesas: 0 }
+      monthlyMap.set(month, { ...current, receita: current.receita + payment.amount })
+    })
+
+    filteredExpenses.forEach((expense) => {
+      const month = monthNames[new Date(expense.date).getMonth()]
+      const current = monthlyMap.get(month) || { month, receita: 0, despesas: 0 }
+      monthlyMap.set(month, { ...current, despesas: current.despesas + expense.amount })
+    })
+
+    return Array.from(monthlyMap.values()).sort(
+      (a, b) => monthNames.indexOf(a.month) - monthNames.indexOf(b.month)
+    )
+  }, [filteredPayments, filteredExpenses])
+
   const netProfit = totalRevenue - totalExpenses
   const isProfit = netProfit >= 0
 
@@ -50,7 +106,7 @@ export function DashboardView({ totalRevenue, totalExpenses, onQuickAction }: Da
                 className="bg-white"
               />
             </div>
-            <Button className="bg-primary hover:bg-primary/90">
+            <Button type="button" className="bg-primary hover:bg-primary/90">
               Filtrar
             </Button>
           </div>

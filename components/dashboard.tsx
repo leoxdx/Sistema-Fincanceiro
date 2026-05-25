@@ -46,9 +46,6 @@ export function Dashboard() {
     loadData()
   }, [])
 
-  const totalRevenue = payments.reduce((sum, p) => sum + p.amount, 0)
-  const totalExpenses = expenses.reduce((sum, e) => sum + e.amount, 0)
-
   const handleAddPayment = async (payment: Omit<Payment, 'id'>) => {
     try {
       const response = await fetch('/api/payments', {
@@ -163,7 +160,7 @@ export function Dashboard() {
           <div className="mb-6">
             <h1 className="text-2xl font-bold text-zinc-800">
               {currentView === 'dashboard' && 'Dashboard'}
-              {currentView === 'payments' && 'Pacientes e Pagamentos'}
+              {currentView === 'payments' && 'Pacientes'}
               {currentView === 'expenses' && 'Lançar Despesa'}
               {currentView === 'reports' && 'Exportar Relatórios'}
             </h1>
@@ -183,8 +180,8 @@ export function Dashboard() {
             <>
               {currentView === 'dashboard' && (
                 <DashboardView
-                  totalRevenue={totalRevenue}
-                  totalExpenses={totalExpenses}
+                  payments={payments}
+                  expenses={expenses}
                   onQuickAction={handleQuickAction}
                 />
               )}
