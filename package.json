@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "prebuild": "pnpm db:push",
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
@@ -14,7 +15,6 @@
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",
     "@prisma/client": "^4.16.2",
-    "@supabase/supabase-js": "^2.0.0",
     "@supabase/supabase-js": "^2.0.0",
     "@radix-ui/react-accordion": "1.2.12",
     "@radix-ui/react-alert-dialog": "1.1.15",
