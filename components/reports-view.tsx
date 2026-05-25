@@ -65,7 +65,8 @@ export function ReportsView({ payments }: ReportsViewProps) {
     const payload = {
       month: selectedMonth,
       year: selectedYear,
-      excludeCash
+      excludeCash,
+      format: 'xlsx'
     }
 
     const response = await fetch('/api/reports/export', {
@@ -221,7 +222,7 @@ export function ReportsView({ payments }: ReportsViewProps) {
                 ) : (
                   <>
                     <Download className="mr-2 h-4 w-4" />
-                    Baixar CSV
+                    Baixar XLSX
                   </>
                 )}
               </Button>
@@ -260,7 +261,7 @@ export function ReportsView({ payments }: ReportsViewProps) {
                 ) : (
                   <>
                     <Download className="mr-2 h-4 w-4" />
-                    Baixar CSV
+                    Baixar XLSX
                   </>
                 )}
               </Button>
