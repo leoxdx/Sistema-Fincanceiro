@@ -6,6 +6,8 @@ import { formatCurrency, formatDate, getPaymentMethodLabel, getPaymentMethodColo
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
@@ -17,13 +19,35 @@ interface PaymentsViewProps {
   onAddPayment: (payment: Omit<Payment, 'id'>) => Promise<void>
   onEditPayment: (payment: Payment) => Promise<void>
   onDeletePayment: (id: string) => Promise<void>
+  onFilterChange: (month: string, year: string) => Promise<void>
+  currentMonth: string
+  currentYear: string
 }
 
-export function PaymentsView({ payments, onAddPayment, onEditPayment, onDeletePayment }: PaymentsViewProps) {
+const months = [
+  { value: '01', label: 'Janeiro' },
+  { value: '02', label: 'Fevereiro' },
+  { value: '03', label: 'Março' },
+  { value: '04', label: 'Abril' },
+  { value: '05', label: 'Maio' },
+  { value: '06', label: 'Junho' },
+  { value: '07', label: 'Julho' },
+  { value: '08', label: 'Agosto' },
+  { value: '09', label: 'Setembro' },
+  { value: '10', label: 'Outubro' },
+  { value: '11', label: 'Novembro' },
+  { value: '12', label: 'Dezembro' },
+]
+
+const startYear = 2026
+const years = Array.from({ length: 4 }, (_, i) => String(startYear + i))
+
+export function PaymentsView({ payments, onAddPayment, onEditPayment, onDeletePayment, onFilterChange, currentMonth, currentYear }: PaymentsViewProps) {
   const [searchTerm, setSearchTerm] = useState('')
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingPayment, setEditingPayment] = useState<Payment | null>(null)
   const [deleteId, setDeleteId] = useState<string | null>(null)
+  const [filterLoading, setFilterLoading] = useState(false)
 
   const filteredPayments = payments.filter(payment => 
     payment.patientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -55,8 +79,57 @@ export function PaymentsView({ payments, onAddPayment, onEditPayment, onDeletePa
     handleModalClose()
   }
 
+  const handleFilterChange = async (month: string, year: string) => {
+    setFilterLoading(true)
+    try {
+      await onFilterChange(month, year)
+    } finally {
+      setFilterLoading(false)
+    }
+  }
+
+  const totalPayments = filteredPayments.reduce((sum, p) => sum + p.amount, 0)
+
   return (
     <div className="space-y-6">
+      {/* Filter Bar */}
+      <Card className="bg-white shadow-sm">
+        <CardContent className="p-4">
+          <div className="flex flex-col sm:flex-row gap-4 items-end">
+            <div className="flex-1 space-y-2">
+              <Label className="text-zinc-600 text-sm">Mês</Label>
+              <Select value={currentMonth} onValueChange={(month) => handleFilterChange(month, currentYear)}>
+                <SelectTrigger className="bg-white">
+                  <SelectValue placeholder="Selecione o mês" />
+                </SelectTrigger>
+                <SelectContent>
+                  {months.map(m => (
+                    <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex-1 space-y-2">
+              <Label className="text-zinc-600 text-sm">Ano</Label>
+              <Select value={currentYear} onValueChange={(year) => handleFilterChange(currentMonth, year)}>
+                <SelectTrigger className="bg-white">
+                  <SelectValue placeholder="Selecione o ano" />
+                </SelectTrigger>
+                <SelectContent>
+                  {years.map(y => (
+                    <SelectItem key={y} value={y}>{y}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2 flex-1">
+              <Label className="text-zinc-600 text-sm">Total do Período</Label>
+              <div className="text-2xl font-bold text-emerald-600">{formatCurrency(totalPayments)}</div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       <Card className="bg-white shadow-sm">
         <CardHeader className="flex flex-col sm:flex-row gap-4 sm:items-center justify-between">
           <CardTitle className="text-zinc-800">Pacientes</CardTitle>

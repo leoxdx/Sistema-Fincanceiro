@@ -19,13 +19,18 @@ export function Dashboard({ onLogout }: DashboardProps) {
   const [payments, setPayments] = useState<Payment[]>([])
   const [expenses, setExpenses] = useState<Expense[]>([])
   const [loading, setLoading] = useState(true)
+  const [currentMonth, setCurrentMonth] = useState(String(new Date().getMonth() + 1).padStart(2, '0'))
+  const [currentYear, setCurrentYear] = useState(String(new Date().getFullYear()))
 
   useEffect(() => {
-    const loadData = async () => {
+    const loadInitialData = async () => {
       try {
+        const month = String(new Date().getMonth() + 1).padStart(2, '0')
+        const year = String(new Date().getFullYear())
+        
         const [paymentsRes, expensesRes] = await Promise.all([
-          fetch('/api/payments'),
-          fetch('/api/expenses')
+          fetch(`/api/payments?month=${month}&year=${year}`),
+          fetch(`/api/expenses?month=${month}&year=${year}`)
         ])
 
         if (!paymentsRes.ok || !expensesRes.ok) {
@@ -39,6 +44,8 @@ export function Dashboard({ onLogout }: DashboardProps) {
 
         setPayments(paymentsData)
         setExpenses(expensesData)
+        setCurrentMonth(month)
+        setCurrentYear(year)
       } catch (error) {
         console.error(error)
         toast.error('Não foi possível carregar os dados do backend.')
@@ -47,7 +54,7 @@ export function Dashboard({ onLogout }: DashboardProps) {
       }
     }
 
-    loadData()
+    loadInitialData()
   }, [])
 
   const handleAddPayment = async (payment: Omit<Payment, 'id'>) => {
@@ -137,6 +144,77 @@ export function Dashboard({ onLogout }: DashboardProps) {
     }
   }
 
+  const handleEditExpense = async (expense: Expense) => {
+    try {
+      const response = await fetch(`/api/expenses/${expense.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          description: expense.description,
+          amount: expense.amount,
+          date: expense.date
+        })
+      })
+
+      if (!response.ok) {
+        throw new Error('Não foi possível atualizar a despesa')
+      }
+
+      const updatedExpense = await response.json()
+      setExpenses((current) => current.map((item) => item.id === updatedExpense.id ? updatedExpense : item))
+      toast.success('Despesa atualizada com sucesso!')
+    } catch (error) {
+      console.error(error)
+      toast.error('Erro ao atualizar a despesa.')
+    }
+  }
+
+  const handleDeleteExpense = async (id: string) => {
+    try {
+      const response = await fetch(`/api/expenses/${id}`, {
+        method: 'DELETE'
+      })
+
+      if (!response.ok) {
+        throw new Error('Não foi possível excluir a despesa')
+      }
+
+      setExpenses((current) => current.filter((expense) => expense.id !== id))
+      toast.success('Despesa excluída com sucesso!')
+    } catch (error) {
+      console.error(error)
+      toast.error('Erro ao excluir a despesa.')
+    }
+  }
+
+  const handlePaymentFilter = async (month: string, year: string) => {
+    try {
+      const response = await fetch(`/api/payments?month=${month}&year=${year}`)
+      if (!response.ok) throw new Error('Falha ao carregar pagamentos')
+      const data = await response.json()
+      setPayments(data)
+      setCurrentMonth(month)
+      setCurrentYear(year)
+    } catch (error) {
+      console.error(error)
+      toast.error('Erro ao carregar pagamentos.')
+    }
+  }
+
+  const handleExpenseFilter = async (month: string, year: string) => {
+    try {
+      const response = await fetch(`/api/expenses?month=${month}&year=${year}`)
+      if (!response.ok) throw new Error('Falha ao carregar despesas')
+      const data = await response.json()
+      setExpenses(data)
+      setCurrentMonth(month)
+      setCurrentYear(year)
+    } catch (error) {
+      console.error(error)
+      toast.error('Erro ao carregar despesas.')
+    }
+  }
+
   const handleQuickAction = (action: 'payment' | 'expense') => {
     if (action === 'payment') {
       setCurrentView('payments')
@@ -195,12 +273,18 @@ export function Dashboard({ onLogout }: DashboardProps) {
                   onAddPayment={handleAddPayment}
                   onEditPayment={handleEditPayment}
                   onDeletePayment={handleDeletePayment}
+                  onFilterChange={handlePaymentFilter}
+                  currentMonth={currentMonth}
+                  currentYear={currentYear}
                 />
               )}
               {currentView === 'expenses' && (
                 <ExpensesView
                   expenses={expenses}
                   onAddExpense={handleAddExpense}
+                  onEditExpense={handleEditExpense}
+                  onDeleteExpense={handleDeleteExpense}
+                  onFilterChange={handleExpenseFilter}
                 />
               )}
               {currentView === 'reports' && (

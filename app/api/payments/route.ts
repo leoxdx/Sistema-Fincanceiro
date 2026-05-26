@@ -10,8 +10,26 @@ const paymentSchema = z.object({
   date: z.string().min(1)
 })
 
-export async function GET() {
+export async function GET(req: Request) {
+  const { searchParams } = new URL(req.url)
+  const month = searchParams.get('month')
+  const year = searchParams.get('year')
+
+  let where = {}
+  if (month && year) {
+    const startDate = new Date(`${year}-${month}-01T00:00:00Z`)
+    const endDate = new Date(startDate)
+    endDate.setMonth(endDate.getMonth() + 1)
+    where = {
+      date: {
+        gte: startDate,
+        lt: endDate
+      }
+    }
+  }
+
   const payments = await prisma.payment.findMany({
+    where,
     orderBy: { createdAt: 'desc' },
     include: { patient: true }
   })
