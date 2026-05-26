@@ -14,9 +14,9 @@ import { PaymentModal } from './payment-modal'
 
 interface PaymentsViewProps {
   payments: Payment[]
-  onAddPayment: (payment: Omit<Payment, 'id'>) => void
-  onEditPayment: (payment: Payment) => void
-  onDeletePayment: (id: string) => void
+  onAddPayment: (payment: Omit<Payment, 'id'>) => Promise<void>
+  onEditPayment: (payment: Payment) => Promise<void>
+  onDeletePayment: (id: string) => Promise<void>
 }
 
 export function PaymentsView({ payments, onAddPayment, onEditPayment, onDeletePayment }: PaymentsViewProps) {
@@ -40,14 +40,14 @@ export function PaymentsView({ payments, onAddPayment, onEditPayment, onDeletePa
     setEditingPayment(null)
   }
 
-  const handleSave = (data: { patientName: string; patientCpf: string; amount: number; method: PaymentMethod; date: string }) => {
+  const handleSave = async (data: { patientName: string; patientCpf: string; amount: number; method: PaymentMethod; date: string }) => {
     if (editingPayment) {
-      onEditPayment({
+      await onEditPayment({
         ...editingPayment,
         ...data
       })
     } else {
-      onAddPayment({
+      await onAddPayment({
         patientId: Date.now().toString(),
         ...data
       })
@@ -161,8 +161,10 @@ export function PaymentsView({ payments, onAddPayment, onEditPayment, onDeletePa
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction
-              onClick={() => {
-                if (deleteId) onDeletePayment(deleteId)
+              onClick={async () => {
+                if (deleteId) {
+                  await onDeletePayment(deleteId)
+                }
                 setDeleteId(null)
               }}
               className="bg-red-500 hover:bg-red-600"

@@ -29,7 +29,8 @@ const months = [
   { value: '12', label: 'Dezembro' },
 ]
 
-const years = ['2024', '2025', '2026']
+const startYear = 2026
+const years = Array.from({ length: 4 }, (_, i) => String(startYear + i))
 
 export function ReportsView({ payments }: ReportsViewProps) {
   const [selectedMonth, setSelectedMonth] = useState('01')

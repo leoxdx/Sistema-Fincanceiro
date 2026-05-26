@@ -163,37 +163,43 @@ export function DashboardView({ payments, expenses, onQuickAction }: DashboardVi
       {/* Chart and Quick Actions */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Chart */}
-        <Card className="lg:col-span-2 bg-white shadow-sm">
+        <Card className="lg:col-span-2 bg-white shadow-sm transition-shadow hover:shadow-md">
           <CardHeader>
             <CardTitle className="text-zinc-800">Fluxo de Caixa Mensal</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-[300px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={monthlyData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e4e4e7" />
-                  <XAxis dataKey="month" stroke="#71717a" fontSize={12} />
-                  <YAxis stroke="#71717a" fontSize={12} tickFormatter={(value) => `R$${value / 1000}k`} />
-                  <Tooltip 
-                    formatter={(value: number) => formatCurrency(value)}
-                    contentStyle={{ 
-                      backgroundColor: 'white', 
-                      border: '1px solid #e4e4e7',
-                      borderRadius: '8px',
-                      boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-                    }}
-                  />
-                  <Legend />
-                  <Bar dataKey="receita" name="Receita" fill="#059669" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="despesas" name="Despesas" fill="#f87171" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
+            {monthlyData.length === 0 ? (
+              <div className="h-[200px] flex items-center justify-center text-zinc-500">
+                Nenhum dado para o período selecionado.
+              </div>
+            ) : (
+              <div className="h-[300px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={monthlyData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e4e4e7" />
+                    <XAxis dataKey="month" stroke="#71717a" fontSize={12} />
+                    <YAxis stroke="#71717a" fontSize={12} tickFormatter={(value) => `R$${value / 1000}k`} />
+                    <Tooltip 
+                      formatter={(value: number) => formatCurrency(value)}
+                      contentStyle={{ 
+                        backgroundColor: 'white', 
+                        border: '1px solid #e4e4e7',
+                        borderRadius: '8px',
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                      }}
+                    />
+                    <Legend />
+                    <Bar dataKey="receita" name="Receita" fill="#059669" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="despesas" name="Despesas" fill="#f87171" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            )}
           </CardContent>
         </Card>
 
         {/* Quick Actions */}
-        <Card className="bg-white shadow-sm">
+        <Card className="bg-white shadow-sm transition-shadow hover:shadow-md">
           <CardHeader>
             <CardTitle className="text-zinc-800">Ações Rápidas</CardTitle>
           </CardHeader>

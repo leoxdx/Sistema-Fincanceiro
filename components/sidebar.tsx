@@ -79,14 +79,14 @@ export function Sidebar({ currentView, onViewChange, isOpen, onToggle, onLogout 
                   if (window.innerWidth < 1024) onToggle()
                 }}
                 className={cn(
-                  "w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200",
+                  "w-full min-w-0 flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200",
                   currentView === item.view
                     ? "bg-primary text-white shadow-md"
                     : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900"
                 )}
               >
                 {item.icon}
-                {item.label}
+                <span className="max-w-full truncate whitespace-nowrap">{item.label}</span>
               </button>
             ))}
           </nav>

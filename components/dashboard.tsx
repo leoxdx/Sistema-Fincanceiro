@@ -9,7 +9,11 @@ import { ExpensesView } from './expenses-view'
 import { ReportsView } from './reports-view'
 import { toast } from 'sonner'
 
-export function Dashboard() {
+interface DashboardProps {
+  onLogout: () => void
+}
+
+export function Dashboard({ onLogout }: DashboardProps) {
   const [currentView, setCurrentView] = useState<View>('dashboard')
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [payments, setPayments] = useState<Payment[]>([])
@@ -142,7 +146,7 @@ export function Dashboard() {
   }
 
   const handleLogout = () => {
-    window.location.reload()
+    onLogout()
   }
 
   return (

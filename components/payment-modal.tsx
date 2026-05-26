@@ -13,7 +13,7 @@ import { Loader2 } from 'lucide-react'
 interface PaymentModalProps {
   isOpen: boolean
   onClose: () => void
-  onSave: (data: { patientName: string; patientCpf: string; amount: number; method: PaymentMethod; date: string }) => void
+  onSave: (data: { patientName: string; patientCpf: string; amount: number; method: PaymentMethod; date: string }) => Promise<void>
   initialData?: Payment | null
 }
 
@@ -67,16 +67,18 @@ export function PaymentModal({ isOpen, onClose, onSave, initialData }: PaymentMo
     }
 
     setLoading(true)
-    await new Promise(resolve => setTimeout(resolve, 500))
-    
-    onSave({
-      patientName: name,
-      patientCpf: cpf,
-      amount: parseFloat(amount),
-      method,
-      date
-    })
-    setLoading(false)
+    try {
+      await onSave({
+        patientName: name,
+        patientCpf: cpf,
+        amount: parseFloat(amount),
+        method,
+        date
+      })
+      onClose()
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
