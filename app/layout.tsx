@@ -7,9 +7,9 @@ import './globals.css'
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
 export const metadata: Metadata = {
-  title: 'DentClinic - Gestão de Consultório',
+  title: 'Reference Financeiro',
   description: 'Sistema de gestão para consultório odontológico',
-  generator: 'v0.app',
+  generator: 'Leonardo Souza',
 }
 
 export default function RootLayout({
