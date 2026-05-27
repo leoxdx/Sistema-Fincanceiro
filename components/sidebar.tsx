@@ -64,7 +64,7 @@ export function Sidebar({ currentView, onViewChange, isOpen, onToggle, onLogout 
               </svg>
             </div>
             <div>
-              <h1 className="font-bold text-lg text-zinc-800">Reference Financeiro</h1>
+              <h1 className="font-bold text-lg text-zinc-800">Reference</h1>
               <p className="text-xs text-zinc-500">Gestão de Consultório</p>
             </div>
           </div>
