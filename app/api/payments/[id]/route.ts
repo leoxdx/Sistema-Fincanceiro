@@ -2,11 +2,12 @@ import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { Prisma } from '@prisma/client'
 import prisma from '@/lib/prisma'
+import { MAX_TRANSACTION_AMOUNT } from '@/lib/amount'
 
 const paymentUpdateSchema = z.object({
   patientName: z.string().min(1),
   patientCpf: z.string().min(1),
-  amount: z.number().positive(),
+  amount: z.number().positive().max(MAX_TRANSACTION_AMOUNT),
   method: z.enum(['pix', 'credit', 'debit', 'boleto', 'cash']),
   date: z.string().min(1)
 })

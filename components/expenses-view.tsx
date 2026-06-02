@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { Expense } from '@/lib/types'
+import { parseCurrencyAmount, validateTransactionAmount } from '@/lib/amount'
 import { formatCurrency, formatDate } from '@/lib/utils-format'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -59,7 +60,10 @@ export function ExpensesView({ expenses, onAddExpense, onEditExpense, onDeleteEx
 
     if (!description.trim()) newErrors.description = 'Descrição é obrigatória'
     if (!amount.trim()) newErrors.amount = 'Valor é obrigatório'
-    else if (parseFloat(amount) <= 0) newErrors.amount = 'Valor deve ser maior que zero'
+    else {
+      const amountError = validateTransactionAmount(amount)
+      if (amountError) newErrors.amount = amountError
+    }
     if (!date) newErrors.date = 'Data é obrigatória'
 
     if (Object.keys(newErrors).length > 0) {
@@ -69,9 +73,12 @@ export function ExpensesView({ expenses, onAddExpense, onEditExpense, onDeleteEx
 
     setLoading(true)
     try {
+      const parsedAmount = parseCurrencyAmount(amount)
+      if (parsedAmount === null) return
+
       await onAddExpense({
         description,
-        amount: parseFloat(amount),
+        amount: parsedAmount,
         date
       })
 
@@ -186,9 +193,8 @@ export function ExpensesView({ expenses, onAddExpense, onEditExpense, onDeleteEx
                 <Label htmlFor="expenseAmount" className="text-zinc-700">Valor (R$)</Label>
                 <Input
                   id="expenseAmount"
-                  type="number"
-                  step="0.01"
-                  min="0"
+                  type="text"
+                  inputMode="decimal"
                   placeholder="0,00"
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}

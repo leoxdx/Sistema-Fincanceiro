@@ -1,8 +1,14 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import dynamic from 'next/dynamic' // <--- 1. IMPORTE O DYNAMIC DO NEXT
 import { LoginForm } from '@/components/login-form'
-import { Dashboard } from '@/components/dashboard'
+
+// 2. IMPORTE O SEU DASHBOARD DESATIVANDO O SSR
+const DashboardWithNoSSR = dynamic(
+  () => import('@/components/dashboard').then((mod) => mod.Dashboard),
+  { ssr: false }
+)
 
 export default function Home() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
@@ -28,5 +34,6 @@ export default function Home() {
     return <LoginForm onLogin={handleLogin} />
   }
 
-  return <Dashboard onLogout={handleLogout} />
+  // 3. USE O COMPONENTE SEM SSR AQUI
+  return <DashboardWithNoSSR onLogout={handleLogout} />
 }

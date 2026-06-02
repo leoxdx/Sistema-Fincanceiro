@@ -120,7 +120,7 @@ export function ReportsView({ payments }: ReportsViewProps) {
         <CardHeader>
           <CardTitle className="text-zinc-800">Fechamento Mensal</CardTitle>
           <CardDescription>
-            Selecione o período para exportar o relatório de pagamentos
+            Selecione o período para exportar o relatório financeiro
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -202,9 +202,9 @@ export function ReportsView({ payments }: ReportsViewProps) {
                 <FileSpreadsheet className="h-8 w-8 text-emerald-600" />
               </div>
               <div>
-                <h3 className="font-semibold text-zinc-800">Exportar Valor Total Recebido</h3>
+                <h3 className="font-semibold text-zinc-800">Exportar Relatório Completo</h3>
                 <p className="text-sm text-zinc-500 mt-1">
-                  Gera o relatório completo do mês com todos os métodos de pagamento
+                  Gera o arquivo do mês com faturamento, despesas e resumo de lucro
                 </p>
               </div>
               <Button
@@ -243,7 +243,7 @@ export function ReportsView({ payments }: ReportsViewProps) {
               <div>
                 <h3 className="font-semibold text-zinc-800">Exportar Total Sem Dinheiro</h3>
                 <p className="text-sm text-zinc-500 mt-1">
-                  Gera o relatório filtrando pagamentos em espécie (apenas digitais/bancários)
+                  Gera o arquivo do mês sem pagamentos em espécie, com despesas e resumo
                 </p>
               </div>
               <Button

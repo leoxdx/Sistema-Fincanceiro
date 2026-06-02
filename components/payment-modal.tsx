@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { PaymentMethod, Payment } from '@/lib/types'
+import { parseCurrencyAmount, validateTransactionAmount } from '@/lib/amount'
 import { formatCPF, validateCPF } from '@/lib/utils-format'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
@@ -58,7 +59,10 @@ export function PaymentModal({ isOpen, onClose, onSave, initialData }: PaymentMo
     if (!cpf.trim()) newErrors.cpf = 'CPF é obrigatório'
     else if (!validateCPF(cpf)) newErrors.cpf = 'CPF inválido'
     if (!amount.trim()) newErrors.amount = 'Valor é obrigatório'
-    else if (parseFloat(amount) <= 0) newErrors.amount = 'Valor deve ser maior que zero'
+    else {
+      const amountError = validateTransactionAmount(amount)
+      if (amountError) newErrors.amount = amountError
+    }
     if (!date) newErrors.date = 'Data é obrigatória'
 
     if (Object.keys(newErrors).length > 0) {
@@ -68,10 +72,13 @@ export function PaymentModal({ isOpen, onClose, onSave, initialData }: PaymentMo
 
     setLoading(true)
     try {
+      const parsedAmount = parseCurrencyAmount(amount)
+      if (parsedAmount === null) return
+
       await onSave({
         patientName: name,
         patientCpf: cpf,
-        amount: parseFloat(amount),
+        amount: parsedAmount,
         method,
         date
       })
@@ -118,9 +125,8 @@ export function PaymentModal({ isOpen, onClose, onSave, initialData }: PaymentMo
             <Label htmlFor="amount" className="text-zinc-700">Valor (R$)</Label>
             <Input
               id="amount"
-              type="number"
-              step="0.01"
-              min="0"
+              type="text"
+              inputMode="decimal"
               placeholder="0,00"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}

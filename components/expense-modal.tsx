@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Expense } from '@/lib/types'
+import { parseCurrencyAmount, validateTransactionAmount } from '@/lib/amount'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -41,7 +42,10 @@ export function ExpenseModal({ isOpen, onClose, onSave, initialData }: ExpenseMo
 
     if (!description.trim()) newErrors.description = 'Descrição é obrigatória'
     if (!amount.trim()) newErrors.amount = 'Valor é obrigatório'
-    else if (parseFloat(amount) <= 0) newErrors.amount = 'Valor deve ser maior que zero'
+    else {
+      const amountError = validateTransactionAmount(amount)
+      if (amountError) newErrors.amount = amountError
+    }
     if (!date) newErrors.date = 'Data é obrigatória'
 
     if (Object.keys(newErrors).length > 0) {
@@ -51,9 +55,12 @@ export function ExpenseModal({ isOpen, onClose, onSave, initialData }: ExpenseMo
 
     setLoading(true)
     try {
+      const parsedAmount = parseCurrencyAmount(amount)
+      if (parsedAmount === null) return
+
       await onSave({
         description,
-        amount: parseFloat(amount),
+        amount: parsedAmount,
         date
       })
       onClose()
@@ -87,9 +94,8 @@ export function ExpenseModal({ isOpen, onClose, onSave, initialData }: ExpenseMo
             <Label htmlFor="amount" className="text-zinc-700">Valor (R$)</Label>
             <Input
               id="amount"
-              type="number"
-              step="0.01"
-              min="0"
+              type="text"
+              inputMode="decimal"
               placeholder="0,00"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}

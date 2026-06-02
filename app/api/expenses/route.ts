@@ -1,10 +1,11 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import prisma from '@/lib/prisma'
+import { MAX_TRANSACTION_AMOUNT } from '@/lib/amount'
 
 const expenseSchema = z.object({
   description: z.string().min(1),
-  amount: z.number().positive(),
+  amount: z.number().positive().max(MAX_TRANSACTION_AMOUNT),
   date: z.string().min(1)
 })
 
