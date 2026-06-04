@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { DateInput } from '@/components/ui/date-input'
 import { Loader2 } from 'lucide-react'
 
 interface ExpenseModalProps {
@@ -65,6 +66,8 @@ export function ExpenseModal({ isOpen, onClose, onSave, initialData }: ExpenseMo
         date
       })
       onClose()
+    } catch {
+      // Error toast is handled by the parent action.
     } finally {
       setLoading(false)
     }
@@ -107,9 +110,8 @@ export function ExpenseModal({ isOpen, onClose, onSave, initialData }: ExpenseMo
 
           <div className="space-y-2">
             <Label htmlFor="date" className="text-zinc-700">Data</Label>
-            <Input
+            <DateInput
               id="date"
-              type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
               className={errors.date ? 'border-red-500' : ''}

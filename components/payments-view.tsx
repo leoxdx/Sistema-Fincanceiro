@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
-import { Plus, Search, Pencil, Trash2 } from 'lucide-react'
+import { Loader2, Plus, Search, Pencil, Trash2 } from 'lucide-react'
 import { PaymentModal } from './payment-modal'
 
 interface PaymentsViewProps {
@@ -126,6 +126,12 @@ export function PaymentsView({ payments, onAddPayment, onEditPayment, onDeletePa
               <div className="break-words text-xl font-bold text-emerald-600 sm:text-2xl">{formatCurrency(totalPayments)}</div>
             </div>
           </div>
+          {filterLoading && (
+            <div className="mt-4 flex items-center gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Atualizando dados do banco...
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -151,8 +157,12 @@ export function PaymentsView({ payments, onAddPayment, onEditPayment, onDeletePa
             />
           </div>
 
-          <div className="space-y-3 md:hidden">
-            {filteredPayments.length === 0 ? (
+          <div className={`space-y-3 md:hidden ${filterLoading ? 'opacity-55' : ''}`}>
+            {filterLoading ? (
+              <div className="rounded-lg border border-zinc-200 p-6 text-center text-sm text-zinc-500">
+                Carregando pagamentos...
+              </div>
+            ) : filteredPayments.length === 0 ? (
               <div className="rounded-lg border border-zinc-200 p-6 text-center text-sm text-zinc-500">
                 Nenhum pagamento encontrado
               </div>
@@ -162,7 +172,7 @@ export function PaymentsView({ payments, onAddPayment, onEditPayment, onDeletePa
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <p className="truncate font-semibold text-zinc-800">{payment.patientName}</p>
-                      <p className="mt-1 break-all font-mono text-xs text-zinc-500">{payment.patientCpf}</p>
+                      <p className="mt-1 break-all text-xs text-zinc-500">{payment.patientCpf}</p>
                     </div>
                     <Badge className={`${getPaymentMethodColor(payment.method)} shrink-0 border-0 font-medium`}>
                       {getPaymentMethodLabel(payment.method)}
@@ -203,7 +213,7 @@ export function PaymentsView({ payments, onAddPayment, onEditPayment, onDeletePa
             )}
           </div>
 
-          <div className="hidden rounded-lg border border-zinc-200 md:block md:overflow-hidden">
+          <div className={`hidden rounded-lg border border-zinc-200 md:block md:overflow-hidden ${filterLoading ? 'opacity-55' : ''}`}>
             <Table>
               <TableHeader>
                 <TableRow className="bg-zinc-50 hover:bg-zinc-50">
@@ -216,7 +226,13 @@ export function PaymentsView({ payments, onAddPayment, onEditPayment, onDeletePa
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredPayments.length === 0 ? (
+                {filterLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="py-8 text-center">
+                      <Loader2 className="mx-auto h-5 w-5 animate-spin text-zinc-400" />
+                    </TableCell>
+                  </TableRow>
+                ) : filteredPayments.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={6} className="py-8 text-center text-zinc-500">
                       Nenhum pagamento encontrado
@@ -226,7 +242,7 @@ export function PaymentsView({ payments, onAddPayment, onEditPayment, onDeletePa
                   filteredPayments.map((payment) => (
                     <TableRow key={payment.id} className="transition-colors hover:bg-zinc-50">
                       <TableCell className="font-medium text-zinc-800">{payment.patientName}</TableCell>
-                      <TableCell className="font-mono text-sm text-zinc-600">{payment.patientCpf}</TableCell>
+                      <TableCell className="text-sm text-zinc-600">{payment.patientCpf}</TableCell>
                       <TableCell className="font-semibold text-emerald-600">{formatCurrency(payment.amount)}</TableCell>
                       <TableCell>
                         <Badge className={`${getPaymentMethodColor(payment.method)} border-0 font-medium`}>
@@ -282,10 +298,14 @@ export function PaymentsView({ payments, onAddPayment, onEditPayment, onDeletePa
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction
               onClick={async () => {
-                if (deleteId) {
-                  await onDeletePayment(deleteId)
+                try {
+                  if (deleteId) {
+                    await onDeletePayment(deleteId)
+                  }
+                  setDeleteId(null)
+                } catch {
+                  // Error toast is handled by the parent action.
                 }
-                setDeleteId(null)
               }}
               className="bg-red-500 hover:bg-red-600"
             >

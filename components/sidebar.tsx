@@ -22,7 +22,7 @@ interface SidebarProps {
 }
 
 const navItems: { view: View; label: string; icon: React.ReactNode }[] = [
-  { view: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard className="h-5 w-5" /> },
+  { view: 'dashboard', label: 'Painel', icon: <LayoutDashboard className="h-5 w-5" /> },
   { view: 'payments', label: 'Pacientes', icon: <Users className="h-5 w-5" /> },
   { view: 'expenses', label: 'Lançar Despesa', icon: <Receipt className="h-5 w-5" /> },
   { view: 'reports', label: 'Exportar Relatórios', icon: <FileSpreadsheet className="h-5 w-5" /> },

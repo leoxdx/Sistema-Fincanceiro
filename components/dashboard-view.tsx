@@ -3,8 +3,8 @@
 import { useMemo, useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { DateInput } from '@/components/ui/date-input'
 import { TrendingUp, TrendingDown, DollarSign, PlusCircle, MinusCircle } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils-format'
 import { getDateOnlyMonthIndex } from '@/lib/date-utils'
@@ -19,27 +19,37 @@ interface DashboardViewProps {
   payments: Payment[]
   expenses: Expense[]
   onQuickAction: (action: 'payment' | 'expense') => void
+  onProcessing: (message: string, action: () => Promise<void> | void) => Promise<void>
 }
 
-export function DashboardView({ payments, expenses, onQuickAction }: DashboardViewProps) {
+export function DashboardView({ payments, expenses, onQuickAction, onProcessing }: DashboardViewProps) {
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
-  const hasDateFilter = startDate !== '' && endDate !== ''
+  const [appliedStartDate, setAppliedStartDate] = useState('')
+  const [appliedEndDate, setAppliedEndDate] = useState('')
+  const hasDateFilter = appliedStartDate !== '' && appliedEndDate !== ''
+
+  const handleFilter = async () => {
+    await onProcessing('Filtrando painel...', () => {
+      setAppliedStartDate(startDate)
+      setAppliedEndDate(endDate)
+    })
+  }
 
   const filteredPayments = useMemo(
     () => payments.filter((payment) => {
       if (!hasDateFilter) return true
-      return payment.date >= startDate && payment.date <= endDate
+      return payment.date >= appliedStartDate && payment.date <= appliedEndDate
     }),
-    [payments, hasDateFilter, startDate, endDate]
+    [payments, hasDateFilter, appliedStartDate, appliedEndDate]
   )
 
   const filteredExpenses = useMemo(
     () => expenses.filter((expense) => {
       if (!hasDateFilter) return true
-      return expense.date >= startDate && expense.date <= endDate
+      return expense.date >= appliedStartDate && expense.date <= appliedEndDate
     }),
-    [expenses, hasDateFilter, startDate, endDate]
+    [expenses, hasDateFilter, appliedStartDate, appliedEndDate]
   )
 
   const totalRevenue = useMemo(
@@ -82,9 +92,8 @@ export function DashboardView({ payments, expenses, onQuickAction }: DashboardVi
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
             <div className="min-w-0 space-y-2">
               <Label htmlFor="startDate" className="text-sm text-zinc-600">Data Inicio</Label>
-              <Input
+              <DateInput
                 id="startDate"
-                type="date"
                 value={startDate}
                 onChange={(event) => setStartDate(event.target.value)}
                 className="bg-white"
@@ -92,15 +101,14 @@ export function DashboardView({ payments, expenses, onQuickAction }: DashboardVi
             </div>
             <div className="min-w-0 space-y-2">
               <Label htmlFor="endDate" className="text-sm text-zinc-600">Data Fim</Label>
-              <Input
+              <DateInput
                 id="endDate"
-                type="date"
                 value={endDate}
                 onChange={(event) => setEndDate(event.target.value)}
                 className="bg-white"
               />
             </div>
-            <Button type="button" className="w-full bg-primary hover:bg-primary/90 sm:w-auto">
+            <Button type="button" onClick={handleFilter} className="w-full bg-primary hover:bg-primary/90 sm:w-auto">
               Filtrar
             </Button>
           </div>

@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { DateInput } from '@/components/ui/date-input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Loader2 } from 'lucide-react'
 
@@ -84,6 +85,8 @@ export function PaymentModal({ isOpen, onClose, onSave, initialData }: PaymentMo
         date
       })
       onClose()
+    } catch {
+      // Error toast is handled by the parent action.
     } finally {
       setLoading(false)
     }
@@ -154,9 +157,8 @@ export function PaymentModal({ isOpen, onClose, onSave, initialData }: PaymentMo
 
           <div className="space-y-2">
             <Label htmlFor="date" className="text-zinc-700">Data do Pagamento</Label>
-            <Input
+            <DateInput
               id="date"
-              type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
               className={errors.date ? 'border-red-500' : ''}

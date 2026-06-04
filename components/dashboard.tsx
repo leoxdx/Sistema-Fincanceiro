@@ -7,6 +7,7 @@ import { DashboardView } from './dashboard-view'
 import { PaymentsView } from './payments-view'
 import { ExpensesView } from './expenses-view'
 import { ReportsView } from './reports-view'
+import { ProcessingOverlay } from '@/components/ui/processing-overlay'
 import { toast } from 'sonner'
 
 interface DashboardProps {
@@ -19,8 +20,21 @@ export function Dashboard({ onLogout }: DashboardProps) {
   const [payments, setPayments] = useState<Payment[]>([])
   const [expenses, setExpenses] = useState<Expense[]>([])
   const [loading, setLoading] = useState(true)
+  const [processingMessage, setProcessingMessage] = useState<string | null>(null)
   const [currentMonth, setCurrentMonth] = useState(String(new Date().getMonth() + 1).padStart(2, '0'))
   const [currentYear, setCurrentYear] = useState(String(new Date().getFullYear()))
+
+  const withProcessing = async (message: string, action: () => Promise<void> | void) => {
+    setProcessingMessage(message)
+    try {
+      await Promise.all([
+        Promise.resolve(action()),
+        new Promise((resolve) => setTimeout(resolve, 450))
+      ])
+    } finally {
+      setProcessingMessage(null)
+    }
+  }
 
   useEffect(() => {
     const loadInitialData = async () => {
@@ -75,6 +89,7 @@ export function Dashboard({ onLogout }: DashboardProps) {
     } catch (error) {
       console.error(error)
       toast.error('Erro ao salvar o pagamento.')
+      throw error
     }
   }
 
@@ -102,6 +117,7 @@ export function Dashboard({ onLogout }: DashboardProps) {
     } catch (error) {
       console.error(error)
       toast.error('Erro ao atualizar o pagamento.')
+      throw error
     }
   }
 
@@ -120,6 +136,7 @@ export function Dashboard({ onLogout }: DashboardProps) {
     } catch (error) {
       console.error(error)
       toast.error('Erro ao excluir o pagamento.')
+      throw error
     }
   }
 
@@ -141,6 +158,7 @@ export function Dashboard({ onLogout }: DashboardProps) {
     } catch (error) {
       console.error(error)
       toast.error('Erro ao salvar a despesa.')
+      throw error
     }
   }
 
@@ -166,6 +184,7 @@ export function Dashboard({ onLogout }: DashboardProps) {
     } catch (error) {
       console.error(error)
       toast.error('Erro ao atualizar a despesa.')
+      throw error
     }
   }
 
@@ -184,35 +203,36 @@ export function Dashboard({ onLogout }: DashboardProps) {
     } catch (error) {
       console.error(error)
       toast.error('Erro ao excluir a despesa.')
+      throw error
     }
   }
 
   const handlePaymentFilter = async (month: string, year: string) => {
-    try {
+    await withProcessing('Carregando pagamentos...', async () => {
       const response = await fetch(`/api/payments?month=${month}&year=${year}`)
       if (!response.ok) throw new Error('Falha ao carregar pagamentos')
       const data = await response.json()
       setPayments(data)
       setCurrentMonth(month)
       setCurrentYear(year)
-    } catch (error) {
+    }).catch((error) => {
       console.error(error)
       toast.error('Erro ao carregar pagamentos.')
-    }
+    })
   }
 
   const handleExpenseFilter = async (month: string, year: string) => {
-    try {
+    await withProcessing('Carregando despesas...', async () => {
       const response = await fetch(`/api/expenses?month=${month}&year=${year}`)
       if (!response.ok) throw new Error('Falha ao carregar despesas')
       const data = await response.json()
       setExpenses(data)
       setCurrentMonth(month)
       setCurrentYear(year)
-    } catch (error) {
+    }).catch((error) => {
       console.error(error)
       toast.error('Erro ao carregar despesas.')
-    }
+    })
   }
 
   const handleQuickAction = (action: 'payment' | 'expense') => {
@@ -229,6 +249,7 @@ export function Dashboard({ onLogout }: DashboardProps) {
 
   return (
     <div className="min-h-screen bg-[#f8fafc]">
+      <ProcessingOverlay message={processingMessage} />
       <Sidebar
         currentView={currentView}
         onViewChange={setCurrentView}
@@ -241,7 +262,7 @@ export function Dashboard({ onLogout }: DashboardProps) {
         <div className="p-4 lg:p-8 pt-16 lg:pt-8">
           <div className="mb-6">
             <h1 className="text-2xl font-bold text-zinc-800">
-              {currentView === 'dashboard' && 'Dashboard'}
+              {currentView === 'dashboard' && 'Painel'}
               {currentView === 'payments' && 'Pacientes'}
               {currentView === 'expenses' && 'Lançar Despesa'}
               {currentView === 'reports' && 'Exportar Relatórios'}
@@ -265,6 +286,7 @@ export function Dashboard({ onLogout }: DashboardProps) {
                   payments={payments}
                   expenses={expenses}
                   onQuickAction={handleQuickAction}
+                  onProcessing={withProcessing}
                 />
               )}
               {currentView === 'payments' && (
