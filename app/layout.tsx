@@ -1,15 +1,34 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { Inter } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import { Toaster } from '@/components/ui/sonner'
 import './globals.css'
 
-const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
+const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
 
 export const metadata: Metadata = {
   title: 'Reference Financeiro',
-  description: 'Sistema de gestão para consultório odontológico',
-  generator: 'Leonardo Souza',
+  description: 'Sistema de gestao para consultorio odontologico',
+  applicationName: 'Reference Financeiro',
+  manifest: '/manifest.webmanifest',
+  appleWebApp: {
+    capable: true,
+    title: 'Reference Financeiro',
+    statusBarStyle: 'default'
+  },
+  icons: {
+    icon: [
+      { url: '/icon.svg', type: 'image/svg+xml' },
+      { url: '/icon-light-32x32.png', sizes: '32x32', type: 'image/png' }
+    ],
+    apple: [{ url: '/apple-icon.png' }]
+  },
+  generator: 'Leonardo Souza'
+}
+
+export const viewport: Viewport = {
+  themeColor: '#059669',
+  viewportFit: 'cover'
 }
 
 export default function RootLayout({

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import prisma from '@/lib/prisma'
 import { MAX_TRANSACTION_AMOUNT } from '@/lib/amount'
+import { createMonthDateRange, formatDateOnlyFromDate, parseDateOnlyToUtcDate } from '@/lib/date-utils'
 
 const expenseSchema = z.object({
   description: z.string().min(1),
@@ -16,13 +17,11 @@ export async function GET(req: Request) {
 
   let where = {}
   if (month && year) {
-    const startDate = new Date(`${year}-${month}-01T00:00:00Z`)
-    const endDate = new Date(startDate)
-    endDate.setMonth(endDate.getMonth() + 1)
+    const { start, end } = createMonthDateRange(year, month)
     where = {
       date: {
-        gte: startDate,
-        lt: endDate
+        gte: start,
+        lt: end
       }
     }
   }
@@ -37,7 +36,7 @@ export async function GET(req: Request) {
       id: expense.id.toString(),
       description: expense.description,
       amount: expense.amount,
-      date: expense.date.toISOString().split('T')[0]
+      date: formatDateOnlyFromDate(expense.date)
     }))
   )
 }
@@ -55,7 +54,7 @@ export async function POST(req: Request) {
     data: {
       description,
       amount,
-      date: new Date(date)
+      date: parseDateOnlyToUtcDate(date)
     }
   })
 
@@ -63,6 +62,6 @@ export async function POST(req: Request) {
     id: expense.id.toString(),
     description: expense.description,
     amount: expense.amount,
-    date: expense.date.toISOString().split('T')[0]
+    date: formatDateOnlyFromDate(expense.date)
   })
 }

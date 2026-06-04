@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { TrendingUp, TrendingDown, DollarSign, PlusCircle, MinusCircle } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils-format'
+import { getDateOnlyMonthIndex } from '@/lib/date-utils'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts'
 import { Payment, Expense } from '@/lib/types'
 
@@ -24,14 +25,11 @@ export function DashboardView({ payments, expenses, onQuickAction }: DashboardVi
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
   const hasDateFilter = startDate !== '' && endDate !== ''
-  const start = hasDateFilter ? new Date(startDate) : null
-  const end = hasDateFilter ? new Date(endDate) : null
 
   const filteredPayments = useMemo(
     () => payments.filter((payment) => {
       if (!hasDateFilter) return true
-      const paymentDate = new Date(payment.date)
-      return paymentDate >= start! && paymentDate <= end!
+      return payment.date >= startDate && payment.date <= endDate
     }),
     [payments, hasDateFilter, startDate, endDate]
   )
@@ -39,8 +37,7 @@ export function DashboardView({ payments, expenses, onQuickAction }: DashboardVi
   const filteredExpenses = useMemo(
     () => expenses.filter((expense) => {
       if (!hasDateFilter) return true
-      const expenseDate = new Date(expense.date)
-      return expenseDate >= start! && expenseDate <= end!
+      return expense.date >= startDate && expense.date <= endDate
     }),
     [expenses, hasDateFilter, startDate, endDate]
   )
@@ -59,13 +56,13 @@ export function DashboardView({ payments, expenses, onQuickAction }: DashboardVi
     const monthlyMap = new Map<string, { month: string; receita: number; despesas: number }>()
 
     filteredPayments.forEach((payment) => {
-      const month = monthNames[new Date(payment.date).getMonth()]
+      const month = monthNames[getDateOnlyMonthIndex(payment.date)]
       const current = monthlyMap.get(month) || { month, receita: 0, despesas: 0 }
       monthlyMap.set(month, { ...current, receita: current.receita + payment.amount })
     })
 
     filteredExpenses.forEach((expense) => {
-      const month = monthNames[new Date(expense.date).getMonth()]
+      const month = monthNames[getDateOnlyMonthIndex(expense.date)]
       const current = monthlyMap.get(month) || { month, receita: 0, despesas: 0 }
       monthlyMap.set(month, { ...current, despesas: current.despesas + expense.amount })
     })
@@ -79,80 +76,76 @@ export function DashboardView({ payments, expenses, onQuickAction }: DashboardVi
   const isProfit = netProfit >= 0
 
   return (
-
     <div className="space-y-6">
-      {/* Filter Bar */}
-      
       <Card>
         <CardContent className="p-4">
-          <div className="flex flex-col sm:flex-row gap-4 items-end">
-            <div className="flex-1 space-y-2">
-              <Label htmlFor="startDate" className="text-zinc-600 text-sm">Data Início</Label>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
+            <div className="min-w-0 space-y-2">
+              <Label htmlFor="startDate" className="text-sm text-zinc-600">Data Inicio</Label>
               <Input
                 id="startDate"
                 type="date"
                 value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
+                onChange={(event) => setStartDate(event.target.value)}
                 className="bg-white"
               />
             </div>
-            <div className="flex-1 space-y-2">
-              <Label htmlFor="endDate" className="text-zinc-600 text-sm">Data Fim</Label>
+            <div className="min-w-0 space-y-2">
+              <Label htmlFor="endDate" className="text-sm text-zinc-600">Data Fim</Label>
               <Input
                 id="endDate"
                 type="date"
                 value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
+                onChange={(event) => setEndDate(event.target.value)}
                 className="bg-white"
               />
             </div>
-            <Button type="button" className="bg-primary hover:bg-primary/90">
+            <Button type="button" className="w-full bg-primary hover:bg-primary/90 sm:w-auto">
               Filtrar
             </Button>
           </div>
         </CardContent>
       </Card>
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="bg-white shadow-sm hover:shadow-md transition-shadow">
-          <CardContent className="p-6">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+        <Card className="bg-white shadow-sm transition-shadow hover:shadow-md">
+          <CardContent className="p-4 sm:p-6">
             <div className="flex items-center justify-between">
-              <div>
+              <div className="min-w-0">
                 <p className="text-sm font-medium text-zinc-500">Receita Gerada</p>
-                <p className="text-2xl font-bold text-emerald-600">{formatCurrency(totalRevenue)}</p>
+                <p className="break-words text-xl font-bold text-emerald-600 sm:text-2xl">{formatCurrency(totalRevenue)}</p>
               </div>
-              <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center">
+              <div className="ml-3 flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-emerald-100">
                 <TrendingUp className="h-6 w-6 text-emerald-600" />
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-white shadow-sm hover:shadow-md transition-shadow">
-          <CardContent className="p-6">
+        <Card className="bg-white shadow-sm transition-shadow hover:shadow-md">
+          <CardContent className="p-4 sm:p-6">
             <div className="flex items-center justify-between">
-              <div>
+              <div className="min-w-0">
                 <p className="text-sm font-medium text-zinc-500">Despesas Totais</p>
-                <p className="text-2xl font-bold text-red-500">{formatCurrency(totalExpenses)}</p>
+                <p className="break-words text-xl font-bold text-red-500 sm:text-2xl">{formatCurrency(totalExpenses)}</p>
               </div>
-              <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+              <div className="ml-3 flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-red-100">
                 <TrendingDown className="h-6 w-6 text-red-500" />
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-white shadow-sm hover:shadow-md transition-shadow">
-          <CardContent className="p-6">
+        <Card className="bg-white shadow-sm transition-shadow hover:shadow-md">
+          <CardContent className="p-4 sm:p-6">
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-zinc-500">Lucro Líquido</p>
-                <p className={`text-2xl font-bold ${isProfit ? 'text-emerald-600' : 'text-red-500'}`}>
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-zinc-500">Lucro Liquido</p>
+                <p className={`break-words text-xl font-bold sm:text-2xl ${isProfit ? 'text-emerald-600' : 'text-red-500'}`}>
                   {formatCurrency(netProfit)}
                 </p>
               </div>
-              <div className={`w-12 h-12 rounded-full flex items-center justify-center ${isProfit ? 'bg-emerald-100' : 'bg-red-100'}`}>
+              <div className={`ml-3 flex h-12 w-12 shrink-0 items-center justify-center rounded-full ${isProfit ? 'bg-emerald-100' : 'bg-red-100'}`}>
                 <DollarSign className={`h-6 w-6 ${isProfit ? 'text-emerald-600' : 'text-red-500'}`} />
               </div>
             </div>
@@ -160,29 +153,27 @@ export function DashboardView({ payments, expenses, onQuickAction }: DashboardVi
         </Card>
       </div>
 
-      {/* Chart and Quick Actions */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Chart */}
-        <Card className="lg:col-span-2 bg-white shadow-sm transition-shadow hover:shadow-md">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <Card className="bg-white shadow-sm transition-shadow hover:shadow-md lg:col-span-2">
           <CardHeader>
             <CardTitle className="text-zinc-800">Fluxo de Caixa Mensal</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="px-3 sm:px-6">
             {monthlyData.length === 0 ? (
-              <div className="h-[200px] flex items-center justify-center text-zinc-500">
-                Nenhum dado para o período selecionado.
+              <div className="flex h-[200px] items-center justify-center text-center text-zinc-500">
+                Nenhum dado para o periodo selecionado.
               </div>
             ) : (
-              <div className="h-[300px]">
+              <div className="h-[260px] min-w-0 sm:h-[300px]">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={monthlyData}>
+                  <BarChart data={monthlyData} margin={{ top: 8, right: 8, left: -18, bottom: 0 }} barCategoryGap="18%">
                     <CartesianGrid strokeDasharray="3 3" stroke="#e4e4e7" />
                     <XAxis dataKey="month" stroke="#71717a" fontSize={12} />
                     <YAxis stroke="#71717a" fontSize={12} tickFormatter={(value) => `R$${value / 1000}k`} />
-                    <Tooltip 
+                    <Tooltip
                       formatter={(value: number) => formatCurrency(value)}
-                      contentStyle={{ 
-                        backgroundColor: 'white', 
+                      contentStyle={{
+                        backgroundColor: 'white',
                         border: '1px solid #e4e4e7',
                         borderRadius: '8px',
                         boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
@@ -198,32 +189,30 @@ export function DashboardView({ payments, expenses, onQuickAction }: DashboardVi
           </CardContent>
         </Card>
 
-        {/* Quick Actions */}
         <Card className="bg-white shadow-sm transition-shadow hover:shadow-md">
           <CardHeader>
-            <CardTitle className="text-zinc-800">Ações Rápidas</CardTitle>
+            <CardTitle className="text-zinc-800">Acoes Rapidas</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            <Button 
+            <Button
               onClick={() => onQuickAction('payment')}
-              className="w-full justify-start gap-3 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200"
+              className="w-full min-w-0 justify-start gap-3 border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
               variant="outline"
             >
-              <PlusCircle className="h-5 w-5" />
-              Lançar Pagamento
+              <PlusCircle className="h-5 w-5 shrink-0" />
+              <span className="truncate">Lancar Pagamento</span>
             </Button>
-            <Button 
+            <Button
               onClick={() => onQuickAction('expense')}
-              className="w-full justify-start gap-3 bg-red-50 text-red-700 hover:bg-red-100 border border-red-200"
+              className="w-full min-w-0 justify-start gap-3 border border-red-200 bg-red-50 text-red-700 hover:bg-red-100"
               variant="outline"
             >
-              <MinusCircle className="h-5 w-5" />
-              Lançar Despesa
+              <MinusCircle className="h-5 w-5 shrink-0" />
+              <span className="truncate">Lancar Despesa</span>
             </Button>
           </CardContent>
         </Card>
       </div>
-
     </div>
   )
 }

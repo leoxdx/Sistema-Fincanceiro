@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import prisma from '@/lib/prisma'
 import { MAX_TRANSACTION_AMOUNT } from '@/lib/amount'
+import { createMonthDateRange, formatDateOnlyFromDate, parseDateOnlyToUtcDate } from '@/lib/date-utils'
 
 const paymentSchema = z.object({
   patientName: z.string().min(1),
@@ -18,13 +19,11 @@ export async function GET(req: Request) {
 
   let where = {}
   if (month && year) {
-    const startDate = new Date(`${year}-${month}-01T00:00:00Z`)
-    const endDate = new Date(startDate)
-    endDate.setMonth(endDate.getMonth() + 1)
+    const { start, end } = createMonthDateRange(year, month)
     where = {
       date: {
-        gte: startDate,
-        lt: endDate
+        gte: start,
+        lt: end
       }
     }
   }
@@ -43,7 +42,7 @@ export async function GET(req: Request) {
       patientCpf: payment.patient.cpf,
       amount: payment.amount,
       method: payment.method,
-      date: payment.date.toISOString().split('T')[0]
+      date: formatDateOnlyFromDate(payment.date)
     }))
   )
 }
@@ -68,7 +67,7 @@ export async function POST(req: Request) {
       patientId: patient.id,
       amount,
       method,
-      date: new Date(date)
+      date: parseDateOnlyToUtcDate(date)
     },
     include: { patient: true }
   })
@@ -80,6 +79,6 @@ export async function POST(req: Request) {
     patientCpf: payment.patient.cpf,
     amount: payment.amount,
     method: payment.method,
-    date: payment.date.toISOString().split('T')[0]
+    date: formatDateOnlyFromDate(payment.date)
   })
 }

@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { Expense } from '@/lib/types'
 import { parseCurrencyAmount, validateTransactionAmount } from '@/lib/amount'
+import { getTodayDateInputValue } from '@/lib/date-utils'
 import { formatCurrency, formatDate } from '@/lib/utils-format'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -26,7 +27,7 @@ interface ExpensesViewProps {
 const months = [
   { value: '01', label: 'Janeiro' },
   { value: '02', label: 'Fevereiro' },
-  { value: '03', label: 'Março' },
+  { value: '03', label: 'Marco' },
   { value: '04', label: 'Abril' },
   { value: '05', label: 'Maio' },
   { value: '06', label: 'Junho' },
@@ -40,31 +41,32 @@ const months = [
 
 const startYear = 2026
 const years = Array.from({ length: 4 }, (_, i) => String(startYear + i))
+const todayParts = getTodayDateInputValue().split('-')
 
 export function ExpensesView({ expenses, onAddExpense, onEditExpense, onDeleteExpense, onFilterChange }: ExpensesViewProps) {
   const [description, setDescription] = useState('')
   const [amount, setAmount] = useState('')
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0])
+  const [date, setDate] = useState(getTodayDateInputValue())
   const [loading, setLoading] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null)
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [filterLoading, setFilterLoading] = useState(false)
-  const [selectedMonth, setSelectedMonth] = useState(String(new Date().getMonth() + 1).padStart(2, '0'))
-  const [selectedYear, setSelectedYear] = useState(String(new Date().getFullYear()))
+  const [selectedMonth, setSelectedMonth] = useState(todayParts[1])
+  const [selectedYear, setSelectedYear] = useState(todayParts[0])
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault()
     const newErrors: Record<string, string> = {}
 
-    if (!description.trim()) newErrors.description = 'Descrição é obrigatória'
-    if (!amount.trim()) newErrors.amount = 'Valor é obrigatório'
+    if (!description.trim()) newErrors.description = 'Descricao e obrigatoria'
+    if (!amount.trim()) newErrors.amount = 'Valor e obrigatorio'
     else {
       const amountError = validateTransactionAmount(amount)
       if (amountError) newErrors.amount = amountError
     }
-    if (!date) newErrors.date = 'Data é obrigatória'
+    if (!date) newErrors.date = 'Data e obrigatoria'
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors)
@@ -84,9 +86,9 @@ export function ExpensesView({ expenses, onAddExpense, onEditExpense, onDeleteEx
 
       setDescription('')
       setAmount('')
-      setDate(new Date().toISOString().split('T')[0])
+      setDate(getTodayDateInputValue())
       setErrors({})
-      toast.success('Despesa lançada com sucesso!')
+      toast.success('Despesa lancada com sucesso!')
     } finally {
       setLoading(false)
     }
@@ -125,71 +127,69 @@ export function ExpensesView({ expenses, onAddExpense, onEditExpense, onDeleteEx
     setEditingExpense(null)
   }
 
-  const totalExpenses = expenses.reduce((sum, e) => sum + e.amount, 0)
+  const totalExpenses = expenses.reduce((sum, expense) => sum + expense.amount, 0)
 
   return (
     <div className="space-y-6">
-      {/* Filter Bar */}
       <Card className="bg-white shadow-sm">
         <CardContent className="p-4">
-          <div className="flex flex-col sm:flex-row gap-4 items-end">
-            <div className="flex-1 space-y-2">
-              <Label className="text-zinc-600 text-sm">Mês</Label>
-              <Select value={selectedMonth} onValueChange={(month) => handleFilterChange(month, selectedYear)}>
-                <SelectTrigger className="bg-white">
-                  <SelectValue placeholder="Selecione o mês" />
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 sm:items-end">
+            <div className="min-w-0 space-y-2">
+              <Label className="text-sm text-zinc-600">Mes</Label>
+              <Select value={selectedMonth} disabled={filterLoading} onValueChange={(month) => handleFilterChange(month, selectedYear)}>
+                <SelectTrigger className="w-full bg-white">
+                  <SelectValue placeholder="Selecione o mes" />
                 </SelectTrigger>
                 <SelectContent>
-                  {months.map(m => (
-                    <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
+                  {months.map(month => (
+                    <SelectItem key={month.value} value={month.value}>{month.label}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
-            <div className="flex-1 space-y-2">
-              <Label className="text-zinc-600 text-sm">Ano</Label>
-              <Select value={selectedYear} onValueChange={(year) => handleFilterChange(selectedMonth, year)}>
-                <SelectTrigger className="bg-white">
+            <div className="min-w-0 space-y-2">
+              <Label className="text-sm text-zinc-600">Ano</Label>
+              <Select value={selectedYear} disabled={filterLoading} onValueChange={(year) => handleFilterChange(selectedMonth, year)}>
+                <SelectTrigger className="w-full bg-white">
                   <SelectValue placeholder="Selecione o ano" />
                 </SelectTrigger>
                 <SelectContent>
-                  {years.map(y => (
-                    <SelectItem key={y} value={y}>{y}</SelectItem>
+                  {years.map(year => (
+                    <SelectItem key={year} value={year}>{year}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-2 flex-1">
-              <Label className="text-zinc-600 text-sm">Total do Período</Label>
-              <div className="text-2xl font-bold text-red-600">{formatCurrency(totalExpenses)}</div>
+            <div className="min-w-0 space-y-2 rounded-md bg-red-50 p-3 sm:bg-transparent sm:p-0">
+              <Label className="text-sm text-zinc-600">Total do Periodo</Label>
+              <div className="break-words text-xl font-bold text-red-600 sm:text-2xl">{formatCurrency(totalExpenses)}</div>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Form Card */}
       <Card className="bg-white shadow-sm">
         <CardHeader>
-          <CardTitle className="text-zinc-800">Lançar Nova Despesa</CardTitle>
+          <CardTitle className="text-zinc-800">Lancar Nova Despesa</CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit}>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-2">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6">
+              <div className="min-w-0 space-y-2">
                 <Label htmlFor="description" className="text-zinc-700">
-                  Prestador do Serviço / Descrição
+                  Prestador do Servico / Descricao
                 </Label>
                 <Input
                   id="description"
-                  placeholder="Ex: Nome do Funcionário, Boleto Dental, Conta de Luz"
+                  placeholder="Ex: Funcionario, Boleto Dental, Conta de Luz"
                   value={description}
-                  onChange={(e) => setDescription(e.target.value)}
+                  onChange={(event) => setDescription(event.target.value)}
                   className={`bg-zinc-50 ${errors.description ? 'border-red-500' : ''}`}
                 />
                 {errors.description && <p className="text-sm text-red-500">{errors.description}</p>}
               </div>
 
-              <div className="space-y-2">
+              <div className="min-w-0 space-y-2">
                 <Label htmlFor="expenseAmount" className="text-zinc-700">Valor (R$)</Label>
                 <Input
                   id="expenseAmount"
@@ -197,27 +197,27 @@ export function ExpensesView({ expenses, onAddExpense, onEditExpense, onDeleteEx
                   inputMode="decimal"
                   placeholder="0,00"
                   value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
+                  onChange={(event) => setAmount(event.target.value)}
                   className={`bg-zinc-50 ${errors.amount ? 'border-red-500' : ''}`}
                 />
                 {errors.amount && <p className="text-sm text-red-500">{errors.amount}</p>}
               </div>
 
-              <div className="space-y-2">
+              <div className="min-w-0 space-y-2">
                 <Label htmlFor="expenseDate" className="text-zinc-700">Data do Vencimento/Pagamento</Label>
                 <Input
                   id="expenseDate"
                   type="date"
                   value={date}
-                  onChange={(e) => setDate(e.target.value)}
+                  onChange={(event) => setDate(event.target.value)}
                   className={`bg-zinc-50 ${errors.date ? 'border-red-500' : ''}`}
                 />
                 {errors.date && <p className="text-sm text-red-500">{errors.date}</p>}
               </div>
 
               <div className="flex items-end">
-                <Button 
-                  type="submit" 
+                <Button
+                  type="submit"
                   className="w-full bg-primary hover:bg-primary/90"
                   disabled={loading}
                 >
@@ -239,38 +239,87 @@ export function ExpensesView({ expenses, onAddExpense, onEditExpense, onDeleteEx
         </CardContent>
       </Card>
 
-      {/* Expenses Table */}
       <Card className="bg-white shadow-sm">
         <CardHeader>
-          <CardTitle className="text-zinc-800">Despesas do Período</CardTitle>
+          <CardTitle className="text-zinc-800">Despesas do Periodo</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="rounded-lg border border-zinc-200 overflow-hidden">
+          <div className="space-y-3 md:hidden">
+            {filterLoading ? (
+              <div className="rounded-lg border border-zinc-200 p-6 text-center">
+                <Loader2 className="mx-auto h-5 w-5 animate-spin text-zinc-400" />
+              </div>
+            ) : expenses.length === 0 ? (
+              <div className="rounded-lg border border-zinc-200 p-6 text-center text-sm text-zinc-500">
+                Nenhuma despesa neste periodo
+              </div>
+            ) : (
+              expenses.map((expense) => (
+                <div key={expense.id} className="rounded-lg border border-zinc-200 bg-white p-4 shadow-sm">
+                  <div className="min-w-0">
+                    <p className="break-words font-semibold text-zinc-800">{expense.description}</p>
+                  </div>
+                  <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
+                    <div>
+                      <p className="text-xs text-zinc-500">Valor</p>
+                      <p className="break-words font-semibold text-red-500">{formatCurrency(expense.amount)}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-zinc-500">Data</p>
+                      <p className="font-medium text-zinc-700">{formatDate(expense.date)}</p>
+                    </div>
+                  </div>
+                  <div className="mt-4 flex justify-end gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleEdit(expense)}
+                      className="text-zinc-600 hover:text-primary"
+                    >
+                      <Pencil className="mr-2 h-4 w-4" />
+                      Editar
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setDeleteId(expense.id)}
+                      className="text-zinc-600 hover:text-red-500"
+                    >
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      Excluir
+                    </Button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+
+          <div className="hidden rounded-lg border border-zinc-200 md:block md:overflow-hidden">
             <Table>
               <TableHeader>
                 <TableRow className="bg-zinc-50 hover:bg-zinc-50">
-                  <TableHead className="font-semibold text-zinc-700">Descrição</TableHead>
+                  <TableHead className="font-semibold text-zinc-700">Descricao</TableHead>
                   <TableHead className="font-semibold text-zinc-700">Valor</TableHead>
                   <TableHead className="font-semibold text-zinc-700">Data</TableHead>
-                  <TableHead className="font-semibold text-zinc-700 text-right">Ações</TableHead>
+                  <TableHead className="text-right font-semibold text-zinc-700">Acoes</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filterLoading ? (
                   <TableRow>
-                    <TableCell colSpan={4} className="text-center py-8">
-                      <Loader2 className="h-5 w-5 animate-spin mx-auto text-zinc-400" />
+                    <TableCell colSpan={4} className="py-8 text-center">
+                      <Loader2 className="mx-auto h-5 w-5 animate-spin text-zinc-400" />
                     </TableCell>
                   </TableRow>
                 ) : expenses.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={4} className="text-center py-8 text-zinc-500">
-                      Nenhuma despesa neste período
+                    <TableCell colSpan={4} className="py-8 text-center text-zinc-500">
+                      Nenhuma despesa neste periodo
                     </TableCell>
                   </TableRow>
                 ) : (
                   expenses.map((expense) => (
-                    <TableRow key={expense.id} className="hover:bg-zinc-50 transition-colors">
+                    <TableRow key={expense.id} className="transition-colors hover:bg-zinc-50">
                       <TableCell className="font-medium text-zinc-800">{expense.description}</TableCell>
                       <TableCell className="font-semibold text-red-500">{formatCurrency(expense.amount)}</TableCell>
                       <TableCell className="text-zinc-600">{formatDate(expense.date)}</TableCell>
@@ -280,7 +329,7 @@ export function ExpensesView({ expenses, onAddExpense, onEditExpense, onDeleteEx
                             variant="ghost"
                             size="icon"
                             onClick={() => handleEdit(expense)}
-                            className="h-8 w-8 text-zinc-500 hover:text-primary hover:bg-primary/10"
+                            className="h-8 w-8 text-zinc-500 hover:bg-primary/10 hover:text-primary"
                           >
                             <Pencil className="h-4 w-4" />
                           </Button>
@@ -288,7 +337,7 @@ export function ExpensesView({ expenses, onAddExpense, onEditExpense, onDeleteEx
                             variant="ghost"
                             size="icon"
                             onClick={() => setDeleteId(expense.id)}
-                            className="h-8 w-8 text-zinc-500 hover:text-red-500 hover:bg-red-50"
+                            className="h-8 w-8 text-zinc-500 hover:bg-red-50 hover:text-red-500"
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
@@ -303,7 +352,6 @@ export function ExpensesView({ expenses, onAddExpense, onEditExpense, onDeleteEx
         </CardContent>
       </Card>
 
-      {/* Expense Modal */}
       <ExpenseModal
         isOpen={isModalOpen}
         onClose={handleModalClose}
@@ -311,13 +359,12 @@ export function ExpensesView({ expenses, onAddExpense, onEditExpense, onDeleteEx
         initialData={editingExpense}
       />
 
-      {/* Delete Confirmation */}
       <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+            <AlertDialogTitle>Confirmar exclusao</AlertDialogTitle>
             <AlertDialogDescription>
-              Tem certeza que deseja excluir esta despesa? Esta ação não pode ser desfeita.
+              Tem certeza que deseja excluir esta despesa? Esta acao nao pode ser desfeita.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

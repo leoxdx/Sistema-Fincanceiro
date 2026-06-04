@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { Payment } from '@/lib/types'
 import { formatCurrency } from '@/lib/utils-format'
+import { getDateOnlyMonthIndex, getDateOnlyYear, getTodayDateInputValue } from '@/lib/date-utils'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -17,7 +18,7 @@ interface ReportsViewProps {
 const months = [
   { value: '01', label: 'Janeiro' },
   { value: '02', label: 'Fevereiro' },
-  { value: '03', label: 'Março' },
+  { value: '03', label: 'Marco' },
   { value: '04', label: 'Abril' },
   { value: '05', label: 'Maio' },
   { value: '06', label: 'Junho' },
@@ -31,17 +32,17 @@ const months = [
 
 const startYear = 2026
 const years = Array.from({ length: 4 }, (_, i) => String(startYear + i))
+const todayParts = getTodayDateInputValue().split('-')
 
 export function ReportsView({ payments }: ReportsViewProps) {
-  const [selectedMonth, setSelectedMonth] = useState('01')
-  const [selectedYear, setSelectedYear] = useState('2024')
+  const [selectedMonth, setSelectedMonth] = useState(todayParts[1])
+  const [selectedYear, setSelectedYear] = useState(todayParts[0])
   const [loadingType, setLoadingType] = useState<'full' | 'no-cash' | null>(null)
 
   const filteredPayments = payments.filter(payment => {
-    const paymentDate = new Date(payment.date)
     return (
-      paymentDate.getMonth() + 1 === parseInt(selectedMonth) &&
-      paymentDate.getFullYear() === parseInt(selectedYear)
+      getDateOnlyMonthIndex(payment.date) + 1 === parseInt(selectedMonth) &&
+      getDateOnlyYear(payment.date) === parseInt(selectedYear)
     )
   })
 
@@ -78,7 +79,7 @@ export function ReportsView({ payments }: ReportsViewProps) {
 
     if (!response.ok) {
       const errorData = await response.json()
-      throw new Error(errorData.message || 'Erro ao gerar relatório')
+      throw new Error(errorData.message || 'Erro ao gerar relatorio')
     }
 
     const disposition = response.headers.get('content-disposition')
@@ -90,10 +91,10 @@ export function ReportsView({ payments }: ReportsViewProps) {
     setLoadingType('full')
     try {
       await exportReport(false)
-      toast.success('Relatório exportado com sucesso!')
+      toast.success('Relatorio exportado com sucesso!')
     } catch (error) {
       console.error(error)
-      toast.error('Erro ao exportar relatório completo.')
+      toast.error('Erro ao exportar relatorio completo.')
     } finally {
       setLoadingType(null)
     }
@@ -103,10 +104,10 @@ export function ReportsView({ payments }: ReportsViewProps) {
     setLoadingType('no-cash')
     try {
       await exportReport(true)
-      toast.success('Relatório exportado com sucesso!')
+      toast.success('Relatorio exportado com sucesso!')
     } catch (error) {
       console.error(error)
-      toast.error('Erro ao exportar relatório sem dinheiro.')
+      toast.error('Erro ao exportar relatorio sem dinheiro.')
     } finally {
       setLoadingType(null)
     }
@@ -120,16 +121,16 @@ export function ReportsView({ payments }: ReportsViewProps) {
         <CardHeader>
           <CardTitle className="text-zinc-800">Fechamento Mensal</CardTitle>
           <CardDescription>
-            Selecione o período para exportar o relatório financeiro
+            Selecione o periodo para exportar o relatorio financeiro
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="flex-1 space-y-2">
-              <Label className="text-zinc-600 text-sm">Mês</Label>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="min-w-0 space-y-2">
+              <Label className="text-sm text-zinc-600">Mes</Label>
               <Select value={selectedMonth} onValueChange={setSelectedMonth}>
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Selecione o mês" />
+                  <SelectValue placeholder="Selecione o mes" />
                 </SelectTrigger>
                 <SelectContent>
                   {months.map(month => (
@@ -140,8 +141,8 @@ export function ReportsView({ payments }: ReportsViewProps) {
                 </SelectContent>
               </Select>
             </div>
-            <div className="flex-1 space-y-2">
-              <Label className="text-zinc-600 text-sm">Ano</Label>
+            <div className="min-w-0 space-y-2">
+              <Label className="text-sm text-zinc-600">Ano</Label>
               <Select value={selectedYear} onValueChange={setSelectedYear}>
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Selecione o ano" />
@@ -159,16 +160,16 @@ export function ReportsView({ payments }: ReportsViewProps) {
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <Card className="bg-white shadow-sm">
-          <CardContent className="p-6">
+          <CardContent className="p-4 sm:p-6">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-emerald-100">
                 <Banknote className="h-6 w-6 text-emerald-600" />
               </div>
-              <div>
+              <div className="min-w-0">
                 <p className="text-sm text-zinc-500">Total Recebido em {monthName}</p>
-                <p className="text-2xl font-bold text-zinc-800">{formatCurrency(totalAmount)}</p>
+                <p className="break-words text-xl font-bold text-zinc-800 sm:text-2xl">{formatCurrency(totalAmount)}</p>
                 <p className="text-xs text-zinc-400">{filteredPayments.length} pagamentos</p>
               </div>
             </div>
@@ -176,42 +177,42 @@ export function ReportsView({ payments }: ReportsViewProps) {
         </Card>
 
         <Card className="bg-white shadow-sm">
-          <CardContent className="p-6">
+          <CardContent className="p-4 sm:p-6">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-blue-100">
                 <CreditCard className="h-6 w-6 text-blue-600" />
               </div>
-              <div>
+              <div className="min-w-0">
                 <p className="text-sm text-zinc-500">Total sem Dinheiro</p>
-                <p className="text-2xl font-bold text-zinc-800">{formatCurrency(totalWithoutCash)}</p>
-                <p className="text-xs text-zinc-400">Apenas métodos digitais/bancários</p>
+                <p className="break-words text-xl font-bold text-zinc-800 sm:text-2xl">{formatCurrency(totalWithoutCash)}</p>
+                <p className="text-xs text-zinc-400">Apenas metodos digitais/bancarios</p>
               </div>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <Card
-          className="bg-white shadow-sm hover:shadow-md transition-all cursor-pointer border-2 border-transparent hover:border-emerald-200 group"
+          className="cursor-pointer border-2 border-transparent bg-white shadow-sm transition-all hover:border-emerald-200 hover:shadow-md"
           onClick={loadingType ? undefined : handleExportFull}
         >
-          <CardContent className="p-6">
-            <div className="flex flex-col items-center text-center space-y-4">
-              <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center group-hover:bg-emerald-200 transition-colors">
+          <CardContent className="p-4 sm:p-6">
+            <div className="flex flex-col items-center space-y-4 text-center">
+              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 transition-colors group-hover:bg-emerald-200">
                 <FileSpreadsheet className="h-8 w-8 text-emerald-600" />
               </div>
-              <div>
-                <h3 className="font-semibold text-zinc-800">Exportar Relatório Completo</h3>
-                <p className="text-sm text-zinc-500 mt-1">
-                  Gera o arquivo do mês com faturamento, despesas e resumo de lucro
+              <div className="min-w-0">
+                <h3 className="font-semibold text-zinc-800">Exportar Relatorio Completo</h3>
+                <p className="mt-1 text-sm text-zinc-500">
+                  Gera o arquivo do mes com faturamento, despesas e resumo de lucro
                 </p>
               </div>
               <Button
                 className="w-full bg-emerald-600 hover:bg-emerald-700"
                 disabled={loadingType !== null}
-                onClick={(e) => {
-                  e.stopPropagation()
+                onClick={(event) => {
+                  event.stopPropagation()
                   handleExportFull()
                 }}
               >
@@ -232,25 +233,25 @@ export function ReportsView({ payments }: ReportsViewProps) {
         </Card>
 
         <Card
-          className="bg-white shadow-sm hover:shadow-md transition-all cursor-pointer border-2 border-transparent hover:border-blue-200 group"
+          className="cursor-pointer border-2 border-transparent bg-white shadow-sm transition-all hover:border-blue-200 hover:shadow-md"
           onClick={loadingType ? undefined : handleExportNoCash}
         >
-          <CardContent className="p-6">
-            <div className="flex flex-col items-center text-center space-y-4">
-              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center group-hover:bg-blue-200 transition-colors">
+          <CardContent className="p-4 sm:p-6">
+            <div className="flex flex-col items-center space-y-4 text-center">
+              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-blue-100 transition-colors group-hover:bg-blue-200">
                 <CreditCard className="h-8 w-8 text-blue-600" />
               </div>
-              <div>
+              <div className="min-w-0">
                 <h3 className="font-semibold text-zinc-800">Exportar Total Sem Dinheiro</h3>
-                <p className="text-sm text-zinc-500 mt-1">
-                  Gera o arquivo do mês sem pagamentos em espécie, com despesas e resumo
+                <p className="mt-1 text-sm text-zinc-500">
+                  Gera o arquivo do mes sem pagamentos em especie, com despesas e resumo
                 </p>
               </div>
               <Button
                 className="w-full bg-blue-600 hover:bg-blue-700"
                 disabled={loadingType !== null}
-                onClick={(e) => {
-                  e.stopPropagation()
+                onClick={(event) => {
+                  event.stopPropagation()
                   handleExportNoCash()
                 }}
               >

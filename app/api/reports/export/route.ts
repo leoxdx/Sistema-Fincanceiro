@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import ExcelJS from 'exceljs'
 import prisma from '@/lib/prisma'
+import { createMonthDateRange, formatDateOnlyFromDate } from '@/lib/date-utils'
 
 const reportSchema = z.object({
   month: z.string().regex(/^[0-9]{2}$/),
@@ -10,7 +11,7 @@ const reportSchema = z.object({
   format: z.enum(['csv', 'xlsx']).optional()
 })
 
-const formatDate = (date: Date) => date.toISOString().split('T')[0]
+const formatDate = (date: Date) => formatDateOnlyFromDate(date)
 const formatCsvCurrency = (value: number) => value.toFixed(2).replace('.', ',')
 
 function styleSheet(sheet: ExcelJS.Worksheet) {
@@ -42,9 +43,7 @@ export async function POST(req: Request) {
   }
 
   const { month, year, excludeCash = false, format = 'xlsx' } = parse.data
-  const startDate = new Date(`${year}-${month}-01T00:00:00Z`)
-  const endDate = new Date(startDate)
-  endDate.setMonth(endDate.getMonth() + 1)
+  const { start: startDate, end: endDate } = createMonthDateRange(year, month)
 
   const payments = await prisma.payment.findMany({
     where: {

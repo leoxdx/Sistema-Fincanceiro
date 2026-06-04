@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { Prisma } from '@prisma/client'
 import prisma from '@/lib/prisma'
 import { MAX_TRANSACTION_AMOUNT } from '@/lib/amount'
+import { formatDateOnlyFromDate, parseDateOnlyToUtcDate } from '@/lib/date-utils'
 
 const paymentUpdateSchema = z.object({
   patientName: z.string().min(1),
@@ -40,7 +41,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
         patientId: patient.id,
         amount,
         method,
-        date: new Date(date)
+        date: parseDateOnlyToUtcDate(date)
       },
       include: { patient: true }
     })
@@ -52,7 +53,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       patientCpf: payment.patient.cpf,
       amount: payment.amount,
       method: payment.method,
-      date: payment.date.toISOString().split('T')[0]
+      date: formatDateOnlyFromDate(payment.date)
     })
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {

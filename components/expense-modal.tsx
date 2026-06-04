@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Expense } from '@/lib/types'
+import { getTodayDateInputValue } from '@/lib/date-utils'
 import { parseCurrencyAmount, validateTransactionAmount } from '@/lib/amount'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
@@ -31,7 +32,7 @@ export function ExpenseModal({ isOpen, onClose, onSave, initialData }: ExpenseMo
     } else {
       setDescription('')
       setAmount('')
-      setDate(new Date().toISOString().split('T')[0])
+      setDate(getTodayDateInputValue())
     }
     setErrors({})
   }, [initialData, isOpen])
@@ -77,7 +78,7 @@ export function ExpenseModal({ isOpen, onClose, onSave, initialData }: ExpenseMo
             {initialData ? 'Editar Despesa' : 'Adicionar Despesa'}
           </DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="min-w-0 space-y-4">
           <div className="space-y-2">
             <Label htmlFor="description" className="text-zinc-700">Descrição</Label>
             <Input

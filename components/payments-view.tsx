@@ -27,7 +27,7 @@ interface PaymentsViewProps {
 const months = [
   { value: '01', label: 'Janeiro' },
   { value: '02', label: 'Fevereiro' },
-  { value: '03', label: 'Março' },
+  { value: '03', label: 'Marco' },
   { value: '04', label: 'Abril' },
   { value: '05', label: 'Maio' },
   { value: '06', label: 'Junho' },
@@ -49,7 +49,7 @@ export function PaymentsView({ payments, onAddPayment, onEditPayment, onDeletePa
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [filterLoading, setFilterLoading] = useState(false)
 
-  const filteredPayments = payments.filter(payment => 
+  const filteredPayments = payments.filter(payment =>
     payment.patientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
     payment.patientCpf.includes(searchTerm)
   )
@@ -88,96 +88,145 @@ export function PaymentsView({ payments, onAddPayment, onEditPayment, onDeletePa
     }
   }
 
-  const totalPayments = filteredPayments.reduce((sum, p) => sum + p.amount, 0)
+  const totalPayments = filteredPayments.reduce((sum, payment) => sum + payment.amount, 0)
 
   return (
     <div className="space-y-6">
-      {/* Filter Bar */}
       <Card className="bg-white shadow-sm">
         <CardContent className="p-4">
-          <div className="flex flex-col sm:flex-row gap-4 items-end">
-            <div className="flex-1 space-y-2">
-              <Label className="text-zinc-600 text-sm">Mês</Label>
-              <Select value={currentMonth} onValueChange={(month) => handleFilterChange(month, currentYear)}>
-                <SelectTrigger className="bg-white">
-                  <SelectValue placeholder="Selecione o mês" />
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 sm:items-end">
+            <div className="min-w-0 space-y-2">
+              <Label className="text-sm text-zinc-600">Mes</Label>
+              <Select value={currentMonth} disabled={filterLoading} onValueChange={(month) => handleFilterChange(month, currentYear)}>
+                <SelectTrigger className="w-full bg-white">
+                  <SelectValue placeholder="Selecione o mes" />
                 </SelectTrigger>
                 <SelectContent>
-                  {months.map(m => (
-                    <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
+                  {months.map(month => (
+                    <SelectItem key={month.value} value={month.value}>{month.label}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
-            <div className="flex-1 space-y-2">
-              <Label className="text-zinc-600 text-sm">Ano</Label>
-              <Select value={currentYear} onValueChange={(year) => handleFilterChange(currentMonth, year)}>
-                <SelectTrigger className="bg-white">
+            <div className="min-w-0 space-y-2">
+              <Label className="text-sm text-zinc-600">Ano</Label>
+              <Select value={currentYear} disabled={filterLoading} onValueChange={(year) => handleFilterChange(currentMonth, year)}>
+                <SelectTrigger className="w-full bg-white">
                   <SelectValue placeholder="Selecione o ano" />
                 </SelectTrigger>
                 <SelectContent>
-                  {years.map(y => (
-                    <SelectItem key={y} value={y}>{y}</SelectItem>
+                  {years.map(year => (
+                    <SelectItem key={year} value={year}>{year}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-2 flex-1">
-              <Label className="text-zinc-600 text-sm">Total do Período</Label>
-              <div className="text-2xl font-bold text-emerald-600">{formatCurrency(totalPayments)}</div>
+            <div className="min-w-0 space-y-2 rounded-md bg-emerald-50 p-3 sm:bg-transparent sm:p-0">
+              <Label className="text-sm text-zinc-600">Total do Periodo</Label>
+              <div className="break-words text-xl font-bold text-emerald-600 sm:text-2xl">{formatCurrency(totalPayments)}</div>
             </div>
           </div>
         </CardContent>
       </Card>
 
       <Card className="bg-white shadow-sm">
-        <CardHeader className="flex flex-col sm:flex-row gap-4 sm:items-center justify-between">
+        <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <CardTitle className="text-zinc-800">Pacientes</CardTitle>
-          <Button 
+          <Button
             onClick={() => setIsModalOpen(true)}
-            className="bg-primary hover:bg-primary/90"
+            className="w-full bg-primary hover:bg-primary/90 sm:w-auto"
           >
-            <Plus className="h-4 w-4 mr-2" />
+            <Plus className="mr-2 h-4 w-4" />
             Adicionar Pagamento
           </Button>
         </CardHeader>
         <CardContent>
-          {/* Search */}
           <div className="relative mb-6">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
             <Input
               placeholder="Buscar por nome ou CPF..."
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 bg-zinc-50 border-zinc-200 focus-visible:ring-primary"
+              onChange={(event) => setSearchTerm(event.target.value)}
+              className="bg-zinc-50 pl-10 border-zinc-200 focus-visible:ring-primary"
             />
           </div>
 
-          {/* Table */}
-          <div className="rounded-lg border border-zinc-200 overflow-hidden">
+          <div className="space-y-3 md:hidden">
+            {filteredPayments.length === 0 ? (
+              <div className="rounded-lg border border-zinc-200 p-6 text-center text-sm text-zinc-500">
+                Nenhum pagamento encontrado
+              </div>
+            ) : (
+              filteredPayments.map((payment) => (
+                <div key={payment.id} className="rounded-lg border border-zinc-200 bg-white p-4 shadow-sm">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="truncate font-semibold text-zinc-800">{payment.patientName}</p>
+                      <p className="mt-1 break-all font-mono text-xs text-zinc-500">{payment.patientCpf}</p>
+                    </div>
+                    <Badge className={`${getPaymentMethodColor(payment.method)} shrink-0 border-0 font-medium`}>
+                      {getPaymentMethodLabel(payment.method)}
+                    </Badge>
+                  </div>
+                  <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
+                    <div>
+                      <p className="text-xs text-zinc-500">Valor Pago</p>
+                      <p className="break-words font-semibold text-emerald-600">{formatCurrency(payment.amount)}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-zinc-500">Data</p>
+                      <p className="font-medium text-zinc-700">{formatDate(payment.date)}</p>
+                    </div>
+                  </div>
+                  <div className="mt-4 flex justify-end gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleEdit(payment)}
+                      className="text-zinc-600 hover:text-primary"
+                    >
+                      <Pencil className="mr-2 h-4 w-4" />
+                      Editar
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setDeleteId(payment.id)}
+                      className="text-zinc-600 hover:text-red-500"
+                    >
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      Excluir
+                    </Button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+
+          <div className="hidden rounded-lg border border-zinc-200 md:block md:overflow-hidden">
             <Table>
               <TableHeader>
                 <TableRow className="bg-zinc-50 hover:bg-zinc-50">
                   <TableHead className="font-semibold text-zinc-700">Paciente</TableHead>
                   <TableHead className="font-semibold text-zinc-700">CPF</TableHead>
                   <TableHead className="font-semibold text-zinc-700">Valor Pago</TableHead>
-                  <TableHead className="font-semibold text-zinc-700">Método</TableHead>
+                  <TableHead className="font-semibold text-zinc-700">Metodo</TableHead>
                   <TableHead className="font-semibold text-zinc-700">Data</TableHead>
-                  <TableHead className="font-semibold text-zinc-700 text-right">Ações</TableHead>
+                  <TableHead className="text-right font-semibold text-zinc-700">Acoes</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredPayments.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8 text-zinc-500">
+                    <TableCell colSpan={6} className="py-8 text-center text-zinc-500">
                       Nenhum pagamento encontrado
                     </TableCell>
                   </TableRow>
                 ) : (
                   filteredPayments.map((payment) => (
-                    <TableRow key={payment.id} className="hover:bg-zinc-50 transition-colors">
+                    <TableRow key={payment.id} className="transition-colors hover:bg-zinc-50">
                       <TableCell className="font-medium text-zinc-800">{payment.patientName}</TableCell>
-                      <TableCell className="text-zinc-600 font-mono text-sm">{payment.patientCpf}</TableCell>
+                      <TableCell className="font-mono text-sm text-zinc-600">{payment.patientCpf}</TableCell>
                       <TableCell className="font-semibold text-emerald-600">{formatCurrency(payment.amount)}</TableCell>
                       <TableCell>
                         <Badge className={`${getPaymentMethodColor(payment.method)} border-0 font-medium`}>
@@ -191,7 +240,7 @@ export function PaymentsView({ payments, onAddPayment, onEditPayment, onDeletePa
                             variant="ghost"
                             size="icon"
                             onClick={() => handleEdit(payment)}
-                            className="h-8 w-8 text-zinc-500 hover:text-primary hover:bg-primary/10"
+                            className="h-8 w-8 text-zinc-500 hover:bg-primary/10 hover:text-primary"
                           >
                             <Pencil className="h-4 w-4" />
                           </Button>
@@ -199,7 +248,7 @@ export function PaymentsView({ payments, onAddPayment, onEditPayment, onDeletePa
                             variant="ghost"
                             size="icon"
                             onClick={() => setDeleteId(payment.id)}
-                            className="h-8 w-8 text-zinc-500 hover:text-red-500 hover:bg-red-50"
+                            className="h-8 w-8 text-zinc-500 hover:bg-red-50 hover:text-red-500"
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
@@ -214,7 +263,6 @@ export function PaymentsView({ payments, onAddPayment, onEditPayment, onDeletePa
         </CardContent>
       </Card>
 
-      {/* Payment Modal */}
       <PaymentModal
         isOpen={isModalOpen}
         onClose={handleModalClose}
@@ -222,13 +270,12 @@ export function PaymentsView({ payments, onAddPayment, onEditPayment, onDeletePa
         initialData={editingPayment}
       />
 
-      {/* Delete Confirmation */}
       <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+            <AlertDialogTitle>Confirmar exclusao</AlertDialogTitle>
             <AlertDialogDescription>
-              Tem certeza que deseja excluir este pagamento? Esta ação não pode ser desfeita.
+              Tem certeza que deseja excluir este pagamento? Esta acao nao pode ser desfeita.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

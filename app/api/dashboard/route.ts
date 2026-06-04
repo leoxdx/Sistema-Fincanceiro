@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
+import { createDateOnlyRange, formatDateOnlyFromDate, getDateOnlyMonthIndex } from '@/lib/date-utils'
 
 const monthNames = [
   'Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'
@@ -11,11 +12,17 @@ export async function GET(req: Request) {
   const end = url.searchParams.get('end')
 
   const paymentFilter = start && end
-    ? { date: { gte: new Date(start), lte: new Date(end) } }
+    ? (() => {
+        const range = createDateOnlyRange(start, end)
+        return { date: { gte: range.start, lt: range.end } }
+      })()
     : {}
 
   const expenseFilter = start && end
-    ? { date: { gte: new Date(start), lte: new Date(end) } }
+    ? (() => {
+        const range = createDateOnlyRange(start, end)
+        return { date: { gte: range.start, lt: range.end } }
+      })()
     : {}
 
   const [payments, expenses] = await Promise.all([
@@ -30,13 +37,13 @@ export async function GET(req: Request) {
   const monthlyMap = new Map<string, { month: string; receita: number; despesas: number }>()
 
   payments.forEach((payment) => {
-    const month = monthNames[payment.date.getMonth()]
+    const month = monthNames[getDateOnlyMonthIndex(formatDateOnlyFromDate(payment.date))]
     const current = monthlyMap.get(month) || { month, receita: 0, despesas: 0 }
     monthlyMap.set(month, { ...current, receita: current.receita + payment.amount })
   })
 
   expenses.forEach((expense) => {
-    const month = monthNames[expense.date.getMonth()]
+    const month = monthNames[getDateOnlyMonthIndex(formatDateOnlyFromDate(expense.date))]
     const current = monthlyMap.get(month) || { month, receita: 0, despesas: 0 }
     monthlyMap.set(month, { ...current, despesas: current.despesas + expense.amount })
   })

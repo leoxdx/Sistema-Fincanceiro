@@ -1,3 +1,5 @@
+import { formatDateOnlyForDisplay } from './date-utils'
+
 export function formatCurrency(value: number): string {
   return new Intl.NumberFormat('pt-BR', {
     style: 'currency',
@@ -23,7 +25,7 @@ export function validateCPF(cpf: string): boolean {
 }
 
 export function formatDate(date: string): string {
-  return new Date(date).toLocaleDateString('pt-BR')
+  return formatDateOnlyForDisplay(date)
 }
 
 export function getPaymentMethodLabel(method: string): string {

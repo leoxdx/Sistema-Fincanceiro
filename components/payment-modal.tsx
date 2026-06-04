@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { PaymentMethod, Payment } from '@/lib/types'
+import { getTodayDateInputValue } from '@/lib/date-utils'
 import { parseCurrencyAmount, validateTransactionAmount } from '@/lib/amount'
 import { formatCPF, validateCPF } from '@/lib/utils-format'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
@@ -39,7 +40,7 @@ export function PaymentModal({ isOpen, onClose, onSave, initialData }: PaymentMo
       setCpf('')
       setAmount('')
       setMethod('pix')
-      setDate(new Date().toISOString().split('T')[0])
+      setDate(getTodayDateInputValue())
     }
     setErrors({})
   }, [initialData, isOpen])
@@ -96,7 +97,7 @@ export function PaymentModal({ isOpen, onClose, onSave, initialData }: PaymentMo
             {initialData ? 'Editar Pagamento' : 'Adicionar Pagamento'}
           </DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="min-w-0 space-y-4">
           <div className="space-y-2">
             <Label htmlFor="name" className="text-zinc-700">Nome Completo</Label>
             <Input
