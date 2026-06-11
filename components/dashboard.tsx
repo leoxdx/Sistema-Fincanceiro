@@ -283,8 +283,6 @@ export function Dashboard({ onLogout }: DashboardProps) {
             <>
               {currentView === 'dashboard' && (
                 <DashboardView
-                  payments={payments}
-                  expenses={expenses}
                   onQuickAction={handleQuickAction}
                   onProcessing={withProcessing}
                 />
@@ -310,7 +308,7 @@ export function Dashboard({ onLogout }: DashboardProps) {
                 />
               )}
               {currentView === 'reports' && (
-                <ReportsView payments={payments} />
+                <ReportsView />
               )}
             </>
           )}

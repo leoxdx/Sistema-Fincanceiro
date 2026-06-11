@@ -3,6 +3,7 @@ import { z } from 'zod'
 import ExcelJS from 'exceljs'
 import prisma from '@/lib/prisma'
 import { createMonthDateRange, formatDateOnlyFromDate } from '@/lib/date-utils'
+import { getVisiblePatientCpf } from '@/lib/patient-cpf'
 
 const reportSchema = z.object({
   month: z.string().regex(/^[0-9]{2}$/),
@@ -89,7 +90,7 @@ export async function POST(req: Request) {
     payments.forEach((payment) => {
       revenueSheet.addRow({
         patient: payment.patient.name,
-        cpf: payment.patient.cpf,
+        cpf: getVisiblePatientCpf(payment.patient.cpf),
         amount: payment.amount,
         method: payment.method,
         date: formatDate(payment.date)
@@ -139,7 +140,7 @@ export async function POST(req: Request) {
   const revenueHeaders = ['Paciente', 'CPF', 'Valor', 'Metodo', 'Data']
   const revenueRows = payments.map((payment) => ([
     payment.patient.name,
-    payment.patient.cpf,
+    getVisiblePatientCpf(payment.patient.cpf),
     formatCsvCurrency(payment.amount),
     payment.method,
     formatDate(payment.date)

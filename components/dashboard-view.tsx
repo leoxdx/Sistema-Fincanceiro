@@ -1,116 +1,171 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Label } from '@/components/ui/label'
-import { DateInput } from '@/components/ui/date-input'
-import { TrendingUp, TrendingDown, DollarSign, PlusCircle, MinusCircle } from 'lucide-react'
+import { TrendingUp, TrendingDown, DollarSign, PlusCircle, MinusCircle, CalendarDays, Loader2 } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils-format'
-import { getDateOnlyMonthIndex } from '@/lib/date-utils'
+import { getTodayDateInputValue } from '@/lib/date-utils'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts'
-import { Payment, Expense } from '@/lib/types'
 
-const monthNames = [
-  'Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'
-]
+type DashboardRangeId = 'year' | '7' | '15' | '30' | '60' | '120' | '180' | '365'
+
+interface DashboardSummary {
+  totalRevenue: number
+  totalExpenses: number
+  netProfit: number
+  monthlyData: { month: string; receita: number; despesas: number }[]
+}
 
 interface DashboardViewProps {
-  payments: Payment[]
-  expenses: Expense[]
   onQuickAction: (action: 'payment' | 'expense') => void
   onProcessing: (message: string, action: () => Promise<void> | void) => Promise<void>
 }
 
-export function DashboardView({ payments, expenses, onQuickAction, onProcessing }: DashboardViewProps) {
-  const [startDate, setStartDate] = useState('')
-  const [endDate, setEndDate] = useState('')
-  const [appliedStartDate, setAppliedStartDate] = useState('')
-  const [appliedEndDate, setAppliedEndDate] = useState('')
-  const hasDateFilter = appliedStartDate !== '' && appliedEndDate !== ''
+const rangeOptions: { value: DashboardRangeId; label: string }[] = [
+  { value: 'year', label: 'Ano atual' },
+  { value: '7', label: '7 dias' },
+  { value: '15', label: '15 dias' },
+  { value: '30', label: '30 dias' },
+  { value: '60', label: '60 dias' },
+  { value: '120', label: '120 dias' },
+  { value: '180', label: '180 dias' },
+  { value: '365', label: '1 ano' },
+]
 
-  const handleFilter = async () => {
-    await onProcessing('Filtrando painel...', () => {
-      setAppliedStartDate(startDate)
-      setAppliedEndDate(endDate)
+const emptySummary: DashboardSummary = {
+  totalRevenue: 0,
+  totalExpenses: 0,
+  netProfit: 0,
+  monthlyData: []
+}
+
+function toDateInputValue(date: Date) {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+function getRangeDates(rangeId: DashboardRangeId) {
+  const today = new Date()
+
+  if (rangeId === 'year') {
+    const year = getTodayDateInputValue(today).slice(0, 4)
+    return {
+      start: `${year}-01-01`,
+      end: `${year}-12-31`
+    }
+  }
+
+  const days = Number(rangeId)
+  const start = new Date(today)
+  start.setDate(start.getDate() - (days - 1))
+
+  return {
+    start: toDateInputValue(start),
+    end: toDateInputValue(today)
+  }
+}
+
+export function DashboardView({ onQuickAction, onProcessing }: DashboardViewProps) {
+  const [selectedRange, setSelectedRange] = useState<DashboardRangeId>('year')
+  const [summary, setSummary] = useState<DashboardSummary>(emptySummary)
+  const [loading, setLoading] = useState(true)
+
+  const selectedRangeLabel = useMemo(
+    () => rangeOptions.find((option) => option.value === selectedRange)?.label ?? 'Periodo',
+    [selectedRange]
+  )
+
+  const loadDashboard = async (rangeId: DashboardRangeId) => {
+    const { start, end } = getRangeDates(rangeId)
+    const response = await fetch(`/api/dashboard?start=${start}&end=${end}`)
+    if (!response.ok) {
+      throw new Error('Falha ao carregar painel')
+    }
+    const data = await response.json()
+    setSummary(data)
+  }
+
+  useEffect(() => {
+    let isMounted = true
+
+    const loadInitialDashboard = async () => {
+      setLoading(true)
+      try {
+        const { start, end } = getRangeDates('year')
+        const response = await fetch(`/api/dashboard?start=${start}&end=${end}`)
+        if (!response.ok) {
+          throw new Error('Falha ao carregar painel')
+        }
+        const data = await response.json()
+        if (isMounted) {
+          setSummary(data)
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false)
+        }
+      }
+    }
+
+    loadInitialDashboard().catch((error) => {
+      console.error(error)
+      if (isMounted) {
+        setSummary(emptySummary)
+        setLoading(false)
+      }
+    })
+
+    return () => {
+      isMounted = false
+    }
+  }, [])
+
+  const handleRangeChange = async (rangeId: DashboardRangeId) => {
+    setSelectedRange(rangeId)
+    await onProcessing('Atualizando painel...', async () => {
+      await loadDashboard(rangeId)
+    }).catch((error) => {
+      console.error(error)
+      setSummary(emptySummary)
     })
   }
 
-  const filteredPayments = useMemo(
-    () => payments.filter((payment) => {
-      if (!hasDateFilter) return true
-      return payment.date >= appliedStartDate && payment.date <= appliedEndDate
-    }),
-    [payments, hasDateFilter, appliedStartDate, appliedEndDate]
-  )
-
-  const filteredExpenses = useMemo(
-    () => expenses.filter((expense) => {
-      if (!hasDateFilter) return true
-      return expense.date >= appliedStartDate && expense.date <= appliedEndDate
-    }),
-    [expenses, hasDateFilter, appliedStartDate, appliedEndDate]
-  )
-
-  const totalRevenue = useMemo(
-    () => filteredPayments.reduce((sum, payment) => sum + payment.amount, 0),
-    [filteredPayments]
-  )
-
-  const totalExpenses = useMemo(
-    () => filteredExpenses.reduce((sum, expense) => sum + expense.amount, 0),
-    [filteredExpenses]
-  )
-
-  const monthlyData = useMemo(() => {
-    const monthlyMap = new Map<string, { month: string; receita: number; despesas: number }>()
-
-    filteredPayments.forEach((payment) => {
-      const month = monthNames[getDateOnlyMonthIndex(payment.date)]
-      const current = monthlyMap.get(month) || { month, receita: 0, despesas: 0 }
-      monthlyMap.set(month, { ...current, receita: current.receita + payment.amount })
-    })
-
-    filteredExpenses.forEach((expense) => {
-      const month = monthNames[getDateOnlyMonthIndex(expense.date)]
-      const current = monthlyMap.get(month) || { month, receita: 0, despesas: 0 }
-      monthlyMap.set(month, { ...current, despesas: current.despesas + expense.amount })
-    })
-
-    return Array.from(monthlyMap.values()).sort(
-      (a, b) => monthNames.indexOf(a.month) - monthNames.indexOf(b.month)
-    )
-  }, [filteredPayments, filteredExpenses])
-
-  const netProfit = totalRevenue - totalExpenses
+  const totalRevenue = summary.totalRevenue
+  const totalExpenses = summary.totalExpenses
+  const netProfit = summary.netProfit
   const isProfit = netProfit >= 0
 
   return (
     <div className="space-y-6">
-      <Card>
+      <Card className="bg-white shadow-sm">
         <CardContent className="p-4">
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
-            <div className="min-w-0 space-y-2">
-              <Label htmlFor="startDate" className="text-sm text-zinc-600">Data Inicio</Label>
-              <DateInput
-                id="startDate"
-                value={startDate}
-                onChange={(event) => setStartDate(event.target.value)}
-                className="bg-white"
-              />
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 text-sm font-medium text-zinc-600">
+                <CalendarDays className="h-4 w-4 text-primary" />
+                Periodo do painel
+              </div>
+              <p className="mt-1 text-sm text-zinc-500">
+                Resumo financeiro consolidado
+              </p>
             </div>
-            <div className="min-w-0 space-y-2">
-              <Label htmlFor="endDate" className="text-sm text-zinc-600">Data Fim</Label>
-              <DateInput
-                id="endDate"
-                value={endDate}
-                onChange={(event) => setEndDate(event.target.value)}
-                className="bg-white"
-              />
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:flex lg:flex-wrap lg:justify-end">
+              {rangeOptions.map((option) => (
+                <Button
+                  key={option.value}
+                  type="button"
+                  variant={selectedRange === option.value ? 'default' : 'outline'}
+                  onClick={() => handleRangeChange(option.value)}
+                  className={selectedRange === option.value ? 'bg-primary hover:bg-primary/90' : 'bg-white'}
+                  disabled={loading}
+                >
+                  {option.label}
+                </Button>
+              ))}
             </div>
-            <Button type="button" onClick={handleFilter} className="w-full bg-primary hover:bg-primary/90 sm:w-auto">
-              Filtrar
-            </Button>
           </div>
         </CardContent>
       </Card>
@@ -167,19 +222,25 @@ export function DashboardView({ payments, expenses, onQuickAction, onProcessing 
             <CardTitle className="text-zinc-800">Fluxo de Caixa Mensal</CardTitle>
           </CardHeader>
           <CardContent className="px-3 sm:px-6">
-            {monthlyData.length === 0 ? (
-              <div className="flex h-[200px] items-center justify-center text-center text-zinc-500">
+            {loading ? (
+              <div className="flex h-[260px] items-center justify-center gap-2 text-center text-zinc-500 sm:h-[300px]">
+                <Loader2 className="h-5 w-5 animate-spin" />
+                Carregando painel...
+              </div>
+            ) : summary.monthlyData.length === 0 ? (
+              <div className="flex h-[260px] items-center justify-center text-center text-zinc-500 sm:h-[300px]">
                 Nenhum dado para o periodo selecionado.
               </div>
             ) : (
               <div className="h-[260px] min-w-0 sm:h-[300px]">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={monthlyData} margin={{ top: 8, right: 8, left: -18, bottom: 0 }} barCategoryGap="18%">
+                  <BarChart data={summary.monthlyData} margin={{ top: 8, right: 8, left: -18, bottom: 0 }} barCategoryGap="18%">
                     <CartesianGrid strokeDasharray="3 3" stroke="#e4e4e7" />
                     <XAxis dataKey="month" stroke="#71717a" fontSize={12} />
                     <YAxis stroke="#71717a" fontSize={12} tickFormatter={(value) => `R$${value / 1000}k`} />
                     <Tooltip
                       formatter={(value: number) => formatCurrency(value)}
+                      labelFormatter={(label) => `${label} - ${selectedRangeLabel}`}
                       contentStyle={{
                         backgroundColor: 'white',
                         border: '1px solid #e4e4e7',

@@ -172,7 +172,7 @@ export function PaymentsView({ payments, onAddPayment, onEditPayment, onDeletePa
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <p className="truncate font-semibold text-zinc-800">{payment.patientName}</p>
-                      <p className="mt-1 break-all text-xs text-zinc-500">{payment.patientCpf}</p>
+                      <p className="mt-1 break-all text-xs text-zinc-500">{payment.patientCpf || 'CPF nao informado'}</p>
                     </div>
                     <Badge className={`${getPaymentMethodColor(payment.method)} shrink-0 border-0 font-medium`}>
                       {getPaymentMethodLabel(payment.method)}
@@ -242,7 +242,7 @@ export function PaymentsView({ payments, onAddPayment, onEditPayment, onDeletePa
                   filteredPayments.map((payment) => (
                     <TableRow key={payment.id} className="transition-colors hover:bg-zinc-50">
                       <TableCell className="font-medium text-zinc-800">{payment.patientName}</TableCell>
-                      <TableCell className="text-sm text-zinc-600">{payment.patientCpf}</TableCell>
+                      <TableCell className="text-sm text-zinc-600">{payment.patientCpf || 'CPF nao informado'}</TableCell>
                       <TableCell className="font-semibold text-emerald-600">{formatCurrency(payment.amount)}</TableCell>
                       <TableCell>
                         <Badge className={`${getPaymentMethodColor(payment.method)} border-0 font-medium`}>

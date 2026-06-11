@@ -58,8 +58,7 @@ export function PaymentModal({ isOpen, onClose, onSave, initialData }: PaymentMo
     const newErrors: Record<string, string> = {}
 
     if (!name.trim()) newErrors.name = 'Nome é obrigatório'
-    if (!cpf.trim()) newErrors.cpf = 'CPF é obrigatório'
-    else if (!validateCPF(cpf)) newErrors.cpf = 'CPF inválido'
+    if (cpf.trim() && !validateCPF(cpf)) newErrors.cpf = 'CPF inválido'
     if (!amount.trim()) newErrors.amount = 'Valor é obrigatório'
     else {
       const amountError = validateTransactionAmount(amount)
@@ -117,7 +116,7 @@ export function PaymentModal({ isOpen, onClose, onSave, initialData }: PaymentMo
             <Label htmlFor="cpf" className="text-zinc-700">CPF</Label>
             <Input
               id="cpf"
-              placeholder="000.000.000-00"
+              placeholder="Opcional"
               value={cpf}
               onChange={(e) => handleCpfChange(e.target.value)}
               className={errors.cpf ? 'border-red-500' : ''}

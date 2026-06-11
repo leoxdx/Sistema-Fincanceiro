@@ -3,10 +3,11 @@ import { z } from 'zod'
 import prisma from '@/lib/prisma'
 import { MAX_TRANSACTION_AMOUNT } from '@/lib/amount'
 import { createMonthDateRange, formatDateOnlyFromDate, parseDateOnlyToUtcDate } from '@/lib/date-utils'
+import { createMissingPatientCpfToken, getVisiblePatientCpf, normalizePatientCpf } from '@/lib/patient-cpf'
 
 const paymentSchema = z.object({
   patientName: z.string().min(1),
-  patientCpf: z.string().min(1),
+  patientCpf: z.string().optional().default(''),
   amount: z.number().positive().max(MAX_TRANSACTION_AMOUNT),
   method: z.enum(['pix', 'credit', 'debit', 'boleto', 'cash']),
   date: z.string().min(1)
@@ -39,7 +40,7 @@ export async function GET(req: Request) {
       id: payment.id.toString(),
       patientId: payment.patientId.toString(),
       patientName: payment.patient.name,
-      patientCpf: payment.patient.cpf,
+      patientCpf: getVisiblePatientCpf(payment.patient.cpf),
       amount: payment.amount,
       method: payment.method,
       date: formatDateOnlyFromDate(payment.date)
@@ -56,11 +57,16 @@ export async function POST(req: Request) {
   }
 
   const { patientName, patientCpf, amount, method, date } = parse.data
-  const patient = await prisma.patient.upsert({
-    where: { cpf: patientCpf },
-    update: { name: patientName },
-    create: { name: patientName, cpf: patientCpf }
-  })
+  const normalizedCpf = normalizePatientCpf(patientCpf)
+  const patient = normalizedCpf
+    ? await prisma.patient.upsert({
+        where: { cpf: normalizedCpf },
+        update: { name: patientName },
+        create: { name: patientName, cpf: normalizedCpf }
+      })
+    : await prisma.patient.create({
+        data: { name: patientName, cpf: createMissingPatientCpfToken() }
+      })
 
   const payment = await prisma.payment.create({
     data: {
@@ -76,7 +82,7 @@ export async function POST(req: Request) {
     id: payment.id.toString(),
     patientId: payment.patientId.toString(),
     patientName: payment.patient.name,
-    patientCpf: payment.patient.cpf,
+    patientCpf: getVisiblePatientCpf(payment.patient.cpf),
     amount: payment.amount,
     method: payment.method,
     date: formatDateOnlyFromDate(payment.date)
