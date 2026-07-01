@@ -13,7 +13,7 @@
 
 ## 🔗 Demo
 
-**Acesse a demonstração:** _[adicionar link da demo aqui]_
+**Acesse a demonstração:** _[(https://sistema-fincanceiro.vercel.app/)]_
 
 **Credenciais de demonstração:**
 
@@ -23,17 +23,6 @@ Senha:  demo123
 ```
 
 > ⚠️ A demo roda em um banco isolado e com dados fictícios, apenas para fins de demonstração. Os dados podem ser resetados a qualquer momento.
-
----
-
-## 📸 Preview
-
-> _Adicione aqui um GIF ou prints do sistema rodando — é o que mais chama atenção de quem abre o repositório._
-
-<!--
-![Dashboard](./public/preview-dashboard.png)
-![Transações](./public/preview-transacoes.png)
--->
 
 ---
 
