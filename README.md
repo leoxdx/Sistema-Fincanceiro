@@ -13,7 +13,7 @@
 
 ## 🔗 Demo
 
-**Acesse a demonstração:** _[(https://sistema-fincanceiro.vercel.app/)]_
+**Acesse a demonstração:** _[https://sistema-fincanceiro.vercel.app/]_
 
 **Credenciais de demonstração:**
 
